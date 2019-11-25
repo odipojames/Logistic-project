@@ -37,9 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'logistics_api',
     'authentication',
+    'logistics_api',
     'rest_framework',
+    'utils',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'authentication.backends.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    )
+}
+
 
 ROOT_URLCONF = 'logisticts.urls'
 
@@ -71,6 +82,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'logisticts.wsgi.application'
+
+AUTH_USER_MODEL = 'authentication.User'
 
 
 # Database
@@ -105,10 +118,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
-AUTH_USER_MODEL = 'logistics_api.User'
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
+
 
 USE_I18N = True
 
@@ -121,3 +134,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'ochungeugine@gmail.com'
+EMAIL_HOST_PASSWORD = '0728826517E'
+EMAIL_PORT = 587
