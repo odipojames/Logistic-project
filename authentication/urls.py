@@ -5,5 +5,5 @@ from authentication.views import RegistrationAPIView, LoginAPIView, UserUpdateAP
 urlpatterns = [
     path("register/", RegistrationAPIView.as_view(), name="register"),
     path("login/", LoginAPIView.as_view(), name="login"),
-    path("user_update/", UserUpdateAPIView.as_view(), name="user_update")
+    path("user_update/", UserUpdateAPIView.as_view(), name="user_update"),
 ]

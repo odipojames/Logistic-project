@@ -13,7 +13,7 @@ from rest_framework.generics import RetrieveUpdateAPIView
 # Create your views here.
 
 
-class RegistrationAPIView(APIView):
+class RegistrationAPIView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
     renderer_classes = (JsnRenderer, )
     serializer_class = RegistrationSerializer
@@ -33,7 +33,7 @@ class RegistrationAPIView(APIView):
         return Response(response, status=status.HTTP_201_CREATED)
 
 
-class LoginAPIView(APIView):
+class LoginAPIView(generics.GenericAPIView):
 
     permission_classes = (AllowAny,)
     renderer_classes = (JsnRenderer, )
@@ -53,7 +53,7 @@ class LoginAPIView(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-class UserUpdateAPIView(RetrieveUpdateAPIView):
+class UserUpdateAPIView(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (JsnRenderer,)
     serializer_class = UserUpdateSerializer
