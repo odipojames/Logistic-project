@@ -48,3 +48,18 @@ class Truck(models.Model):
 
     def __str__(self):
         return self.plate
+
+
+class Order(models.Model):
+    cargo_type = models.CharField(max_length=200, null=True)
+    Trom = models.CharField(max_length=200, null=True)
+    TO = models.CharField(max_length=200, null=True)
+    location = models.CharField(max_length=200, null=True)
+    Status = models.CharField(max_length=200, null=True, choices=[
+                              ('in progress', 'in progress'), ('complete', 'complete')])
+    Truck = models.ForeignKey(Truck, on_delete=models.CASCADE, null=True,)
+    cargo_type = models.ForeignKey(
+        CargoType, on_delete=models.CASCADE, null=True)
+    cargo_owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='cargo_order')
+    Driver = models.ForeignKey(User, on_delete=models.CASCADE)

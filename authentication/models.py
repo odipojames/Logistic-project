@@ -56,7 +56,7 @@ class UserManager(BaseUserManager):
 
         user = self.model(
             first_name=first_name, last_name=last_name,
-            email=self.normalize_email(email), role='AD', company_name=company_name)
+            email=self.normalize_email(email), role='SA', company_name=company_name)
         user.is_staff = True
         user.is_superuser = True
         user.is_active = True
@@ -67,7 +67,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
 
-    USER_ROLES = (('EM', 'Employee'), ('AD', 'Shipper Admin'),
+    USER_ROLES = (('EM', 'Employee'), ('SA', 'Shipper Admin'),
                   ('TR', 'Transporter'), ('CO', 'Cargo Owner'))
     username = models.CharField(
         max_length=200, blank=True, null=True, unique=True)
