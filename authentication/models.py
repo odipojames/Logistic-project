@@ -1,88 +1,92 @@
 from django.db import models
-from django.contrib.auth.models import User
-import jwt
-from django.contrib.auth.models import BaseUserManager, AbstractUser
-from datetime import datetime, timedelta
-from django.conf import settings
+from django.contrib.auth import get_user_model, password_validation
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
+from django.core.exceptions import ValidationError
 
-
-# Create your models here.
+from companies.models import Employer
+from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
+from utils.validators import validate_international_phone_number
+from utils.helpers import enforce_all_required_arguments_are_truthy
 
 class UserManager(BaseUserManager):
+    """
+    Custom manager to handle the User model methods.
+    """
 
-    def create_user(self, last_name, first_name, username, email, company_name, role='EM', password=None):
-        if first_name is None:
-            raise TypError('first name is  required')
-        if last_name is None:
-            raise TypError('last name is  required')
-        if email is None:
-            raise TypError('email is  required')
-        if company_name is None:
-            raise TypError('company_name is  required')
-        if password is None:
-            raise TypError('passwad is  required')
+    def create_user(self, full_name=None, email=None, password=None, phone=None, role=None, employer=None, **kwargs):
+        REQUIRED_ARGS = ("full_name", "email", "password", "phone", "role", "employer")
+
+        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone, "role": role, "employer": employer}, REQUIRED_ARGS)
+
+        # Create role first. If a role already exists, we don't create it again.
+        role = Role.active_objects.get_or_create(title=role)[0]
+
+        employer = Employer.objects.get_or_create(employer_code=employer)[0]
+
+        # ensure that the passwords are strong enough.
+        try:
+            password_validation.validate_password(password)
+        except ValidationError as exc:
+            # return error accessible in the appropriate field, ie password
+            raise ValidationError({"password": exc.messages}) from exc
+        
         user = self.model(
-            first_name=first_name,
-            last_name=last_name,
-            company_name=company_name,
+            full_name=full_name,
             email=self.normalize_email(email),
-            username=self.normalize_email(email)
-
+            phone=phone,
+            role=role,
+            employer=employer,
+            **kwargs
         )
+
+        # ensure phone number and all fields are valid.
+        user.clean()
         user.set_password(password)
-        user.role = role
         user.save()
         return user
 
     def create_superuser(
-            self, first_name, last_name, email, password,company_name):
+            self, full_name=None, email=None, password=None, phone=None, role="superuser", **kwargs):
         '''
-        create admin
+        This is the method that creates superusers in the database.
         '''
-        if first_name is None:
-            raise TypeError('')
 
-        if last_name is None:
-            raise TypError('first name is  required')
+        admin = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=True, is_staff=True, is_verified=True, is_active=True)
 
-        if email is None:
-            raise TypeError('last name is  required')
+        return admin
 
-        if company_name is None:
-            raise TabError('your company name is required')
+class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
+    """
+    Custom user model to be used throughout the application.
+    """
 
-        if password is None:
-            raise TypeError('passwad is  required')
-
-        user = self.model(
-            first_name=first_name, last_name=last_name,
-            email=self.normalize_email(email), role='SA', company_name=company_name)
-        user.is_staff = True
-        user.is_superuser = True
-        user.is_active = True
-        user.is_verified = True
-        user.set_password(password)
-        user.save()
-
-
-class User(AbstractUser):
-
-    USER_ROLES = (('EM', 'Employee'), ('SA', 'Shipper Admin'),
-                  ('TR', 'Transporter'), ('CO', 'Cargo Owner'))
-    username = models.CharField(
-        max_length=200, blank=True, null=True, unique=True)
+    full_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=200, choices=USER_ROLES, default='EM')
-    company_name = models.CharField(max_length=200, unique=True)
-    is_varified = models.BooleanField(default=False)
+    phone = models.CharField(unique=True, max_length=50)
+    passport_number = models.CharField(unique=True, max_length=50, null=True, blank=True)
+    drivers_license = models.CharField(unique=True, max_length=50, null=True, blank=True)
+    date_joined = models.DateTimeField(auto_now=True)
+    is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
-    REQUIRED_FIELDS = ['first_name', 'last_name','company_name']
+    # TODO: should this be nullable and blank?
+    role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="users", to_field="title")
+
+    employer = models.ForeignKey("companies.Employer", related_name="employees", to_field="employer_code", on_delete=models.SET_NULL, null=True, blank=True)
+
+    REQUIRED_FIELDS = ['full_name', "phone"]
     USERNAME_FIELD = 'email'
+
     objects = UserManager()
+
+    # this manager will now return a QuerySet of all instances that are not soft deleted.
+
+    active_objects = ActiveObjectsQuerySet.as_manager()
 
     def __str__(self):
 
-        return self.email
+        return self.get_username()
 
     @property
     def get_email(self):
@@ -90,18 +94,29 @@ class User(AbstractUser):
         return self.email
 
     @property
-    def token(self):
+    def get_full_name(self):
+        return self.full_name
 
-        return self._generate_jwt_token()
+    def clean(self):
+        """
+        We ensure that the phone number is of the proper format before we save it.
+        """
 
-    def _generate_jwt_token(self):
+        phone = self.phone
 
-        token_expiry = datetime.now() + timedelta(hours=24)
+        if not validate_international_phone_number(phone):
+            raise ValidationError({"phone": "Please enter a valid international phone number."})
+        return super().clean()
 
-        token = jwt.encode({
-            'id': self.pk,
-            'email': self.get_email,
-            'exp': int(token_expiry.strftime('%s'))
-        }, settings.SECRET_KEY, algorithm='HS256')
 
-        return token.decode('utf-8')
+class Role(AbstractBaseModel, models.Model):
+    """
+    Contains the Role that each user must have.
+    """
+
+    title = models.CharField(max_length=100, help_text="User's role within employer's organization.", unique=True)
+
+    active_objects = ActiveObjectsQuerySet.as_manager()
+
+    def __str__(self):
+        return self.title
