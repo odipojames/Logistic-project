@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     # third-party apps
     'rest_framework',
     'django_extensions',
+    'rest_framework_simplejwt.token_blacklist',
     ]
 
 MIDDLEWARE = [
@@ -63,13 +64,12 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'authentication.backends.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     )
 }
-
 
 ROOT_URLCONF = 'logisticts.urls'
 

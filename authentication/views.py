@@ -1,59 +1,43 @@
-from django.shortcuts import render
-from rest_framework.response import Response
-from utils.renderers import JsnRenderer
-from rest_framework import status
+from rest_framework import status, generics
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.renderers import JSONRenderer
-from rest_framework import generics
-from .models import *
-from .serializer import *
-from rest_framework.decorators import api_view
-from rest_framework.generics import RetrieveUpdateAPIView
-# Create your views here.
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 
-class RegistrationAPIView(generics.GenericAPIView):
-    permission_classes = (AllowAny,)
+from authentication.serializers import LoginSerializer, RegistrationSerializer, UserUpdateSerializer
+from utils.renderers import JsnRenderer
+
+
+class RegistrationAPIView(generics.CreateAPIView):
     renderer_classes = (JsnRenderer, )
     serializer_class = RegistrationSerializer
 
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = serializer.data
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
 
-        response = {
-            "user": dict(user),
-            "message": "Account created successfully,confirm from your email"
+        payload = response.data.copy()
+        payload["message"] = "Account created successfully. Please confirm from your email."
 
-        }
-
-        return Response(response, status=status.HTTP_201_CREATED)
+        return Response(payload, status=status.HTTP_201_CREATED)
 
 
-class LoginAPIView(generics.GenericAPIView):
+class LoginAPIView(TokenObtainPairView):
 
-    permission_classes = (AllowAny,)
-    renderer_classes = (JsnRenderer, )
     serializer_class = LoginSerializer
 
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
 
-        user = serializer.data
+        response.data["message"] = "Logged in successfully. Welcome to Shipper."
+        payload = {"data": response.data}
 
-        response = {
-            "user": dict(user),
-            "message": "logged in successfully"
-        }
-
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(payload, status=status.HTTP_200_OK)
 
 
-class UserUpdateAPIView(generics.GenericAPIView):
+class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (JsnRenderer,)
     serializer_class = UserUpdateSerializer
@@ -77,3 +61,32 @@ class UserUpdateAPIView(generics.GenericAPIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    """
+    Method to log out users.
+    """
+
+    refresh_token = request.data.get("refresh")
+
+    if not refresh_token:
+        return Response({"refresh": "You must provide a refresh token."})
+
+    try:
+        refresh_token_instance = RefreshToken(refresh_token)
+        refresh_token_instance.blacklist()
+
+        next_url = request.query_params.get("next") if request.query_params.get("next") else ""
+
+        response = {
+            "data": {"message": "You have been succesfully logged out","next_url": next_url,}
+        }
+
+        return Response(response, status=status.HTTP_200_OK)
+    
+    except TokenError:
+        return Response({"detail": "You are already logged out."}, status=status.HTTP_400_BAD_REQUEST)
+    
