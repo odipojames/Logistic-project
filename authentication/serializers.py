@@ -9,6 +9,7 @@ from authentication.models import User
 from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
 
+
 class RegistrationSerializer(serializers.Serializer):
     """
     Serializer for handling user registration
@@ -16,16 +17,13 @@ class RegistrationSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     phone = serializers.CharField(required=False)
-    full_name = serializers.CharField(max_length=100, validators=[validate_international_phone_number])
-    passport_number = serializers.CharField(required=False)
-    drivers_license = serializers.CharField(required=False)
+    full_name = serializers.CharField(max_length=100, validators=[
+                                      validate_international_phone_number])
     role = serializers.CharField()
-    employer = serializers.CharField()
     password = serializers.CharField(
         max_length=124, min_length=8, write_only=True)
     confirmed_password = serializers.CharField(
         max_length=124, min_length=8, write_only=True)
-
 
     def validate(self, data):
         """validate data before it gets saved"""
@@ -54,7 +52,8 @@ class RegistrationSerializer(serializers.Serializer):
         except IntegrityError as exc:
             errored_field = get_errored_integrity_field(exc)
             if errored_field:
-                raise serializers.ValidationError({errored_field: f"A user is already registered with this {errored_field}."}) from exc
+                raise serializers.ValidationError(
+                    {errored_field: f"A user is already registered with this {errored_field}."}) from exc
         except ValidationError as exc:
             raise serializers.ValidationError(exc.args[0]) from exc
 
@@ -65,35 +64,40 @@ class RegistrationSerializer(serializers.Serializer):
 
 
 class LoginSerializer(TokenObtainPairSerializer):
+    """
+    We rely on the backend provided by simple jwt for more robust authentication.
+    """
+
+    @classmethod
+    def get_token(cls, user):
         """
-        We rely on the backend provided by simple jwt for more robust authentication.
+        Override this method to ensure that the email address is encoded within the JWT token.
         """
-        
-        @classmethod
-        def get_token(cls, user):
-            """
-            Override this method to ensure that the email address is encoded within the JWT token.
-            """
-            token = super().get_token(user)
+        token = super().get_token(user)
 
-            token["email"] = user.email
+        token["email"] = user.email
 
-            return token
-        
-        def validate(self, data):
+        return token
 
-            email = data.get("email")
-            password = data.get("password")
+    def validate(self, data):
 
-            user =  authenticate(username=email, password=password)
+        email = data.get("email")
+        password = data.get("password")
 
-            if not user:
-                raise exceptions.AuthenticationFailed(detail="Wrong email or password", code="authentication_failed")
+        user = authenticate(username=email, password=password)
 
-            if user:
+        if not user:
+            raise exceptions.AuthenticationFailed(
+                detail="Wrong email or password", code="authentication_failed")
 
-                token = LoginSerializer.get_token(user)
-                return {"refresh": str(token), "access": str(token.access_token)}
+        if user.is_verified == False:
+            raise exceptions.AuthenticationFailed(
+                detail="your account has not been verified please contact Shipper", code="unverified_account")
+
+        if user:
+
+            token = LoginSerializer.get_token(user)
+            return {"refresh": str(token), "access": str(token.access_token)}
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -107,7 +111,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ["is_verified", "date_joined", "is_staff", "is_active", "groups", "user_permissions", "is_deleted", "created_at", "updated_at", "last_login", "is_superuser"]
+        exclude = ["is_verified", "date_joined", "is_staff", "is_active", "groups",
+                   "user_permissions", "is_deleted", "created_at", "updated_at", "last_login", "is_superuser"]
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
 
@@ -128,7 +133,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             # of the security stuff that we shouldn't be concerned with.
             instance.set_password(password)
 
-            # if a user changes their password, we blacklist all their outstanding refresh tokens. 
+            # if a user changes their password, we blacklist all their outstanding refresh tokens.
 
             blacklist_user_outstanding_tokens(instance)
 
@@ -137,3 +142,47 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class TransporterRegistrationSerializer(serializers.ModelSerializer):
+    '''register transporter as a user'''
+    full_name = serializers.CharField()
+    phone = serializers.CharField()
+    role = serializers.CharField(default="transporter")
+    password = serializers.CharField(
+        max_length=124, min_length=4, write_only=True,
+        error_messages={
+            "min_length": "Password should be {min_length} characters and above"
+        }
+    )
+
+    class Meta:
+        model = User
+        fields = ["email", "full_name", 'phone',
+                  "password", "role", ]
+
+    def create(self, validated_data):
+
+        return User.objects.create_transporter(**validated_data)
+
+
+class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
+    '''register cargo owner as a user'''
+    full_name = serializers.CharField()
+    phone = serializers.CharField()
+    role = serializers.CharField(default="cargo-owner")
+    password = serializers.CharField(
+        max_length=124, min_length=8, write_only=True,
+        error_messages={
+            "min_length": "Password should be {min_length} characters and above"
+        }
+    )
+
+    class Meta:
+        model = User
+        fields = ["email", "full_name", 'phone',
+                  "password", "role", ]
+
+    def create(self, validated_data):
+
+        return User.objects.create_cargo_owner(**validated_data)

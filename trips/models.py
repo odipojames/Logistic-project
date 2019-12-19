@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.timezone import make_aware
 from django.contrib.postgres.fields import HStoreField
 
-from companies.models import Transporter
+from companies.models import TransporterCompany,CargoOwnerCompany
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
 from utils.validators import validate_start_date_is_before_end_date
@@ -70,7 +70,7 @@ class Trip(AbstractBaseModel, models.Model):
     description = models.CharField(max_length=1000)
     # Do we need a trip number? So as to identify each trip for an order?
     trip_number = models.IntegerField()
-    transporter = models.ForeignKey("companies.Transporter", on_delete=models.CASCADE, related_name="trips")
+    transporter = models.ForeignKey(TransporterCompany, on_delete=models.CASCADE, related_name="trips")
 
     objects = TripManager()
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -85,13 +85,13 @@ class Trip(AbstractBaseModel, models.Model):
         if self.end_date:
             if not validate_start_date_is_before_end_date(self.start_date, self.end_date):
                 raise ValidationError("Start date must be in the present and come before the end date.")
-        
+
             self.end_date = make_aware(self.end_date)
         self.start_date = make_aware(self.start_date)
         # The origin and destination must not be the same places
         if self.origin == self.destination:
             raise ValidationError({"destination": "The destination cannot be the same as the origin."})
-        
+
         return super().clean()
 
 
@@ -104,7 +104,7 @@ class TruckManager(models.Manager):
         """
         Create an actual truck.
         """
-        
+
         REQUIRED_ARGS = ("truck_type", "max_tonnage", "plate_number", "owner")
 
         if drivers and (not isinstance(drivers, list) and not isinstance(drivers, tuple)):
@@ -114,7 +114,7 @@ class TruckManager(models.Manager):
 
         if not isinstance(owner, Transporter):
             raise ValidationError({"owner": "Provide a valid transporter instance for owner."})
-        
+
         truck = self.model(truck_type=truck_type, max_tonnage=max_tonnage, plate_number=plate_number, owner=owner)
 
         truck.save()
@@ -135,7 +135,7 @@ class Truck(AbstractBaseModel, models.Model):
     plate_number = models.CharField(max_length=15, unique=True)
     # TODO should this be a ForeignKey instead?
     drivers = models.ManyToManyField(get_user_model(), related_name="trucks")
-    owner = models.ForeignKey("companies.Transporter", related_name="trucks", on_delete=models.CASCADE)
+    owner = models.ForeignKey(TransporterCompany, related_name="trucks", on_delete=models.CASCADE)
     max_tonnage = models.DecimalField(max_digits=8, decimal_places=4)
 
     objects = TruckManager()
@@ -187,7 +187,7 @@ class TripInvoice(AbstractBaseModel, models.Model):
         for key in RATE_CHOICES:
             if key not in self.charges.keys():
                 raise ValidationError({"charges": f"{key} must be provided."})
-        
+
         # if a key is passed that shouldn't be included, we remove it.
         for key in self.charges.copy().keys():
             if key not in RATE_CHOICES:
@@ -222,7 +222,7 @@ class Rating(AbstractBaseModel, models.Model):
     """
 
     # is the reviewer a User instance or a CargoOwner instance?
-    reviewer = models.ForeignKey("companies.CargoOwner", on_delete=models.CASCADE, related_name="ratings")
+    reviewer = models.ForeignKey(CargoOwnerCompany, on_delete=models.CASCADE, related_name="ratings")
     body = models.CharField(max_length=1000)
     points = models.IntegerField()
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="ratings")
@@ -232,4 +232,3 @@ class Rating(AbstractBaseModel, models.Model):
 
     def __str__(self):
         return f"Review by {self.reviewer.company_name} for {self.trip}."
-

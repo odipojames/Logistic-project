@@ -31,3 +31,13 @@ def validate_start_date_is_before_end_date(start_date, end_date):
     if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
         return False
     return start_date < end_date
+
+
+def validate_file_extension(value):
+    '''validate file uploads'''
+    import os
+    from django.core.exceptions import ValidationError
+    ext = os.path.splitext(value.name)[1]  # [0] returns path+filename
+    valid_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.png']
+    if not ext.lower() in valid_extensions:
+        raise ValidationError(u'Unsupported file extension.')

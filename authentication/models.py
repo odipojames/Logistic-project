@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
-
-from companies.models import Employer
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.validators import validate_international_phone_number
 from utils.helpers import enforce_all_required_arguments_are_truthy
@@ -13,15 +11,15 @@ class UserManager(BaseUserManager):
     Custom manager to handle the User model methods.
     """
 
-    def create_user(self, full_name=None, email=None, password=None, phone=None, role=None, employer=None, **kwargs):
-        REQUIRED_ARGS = ("full_name", "email", "password", "phone", "role", "employer")
+    def create_user(self, full_name=None, email=None, password=None, phone=None, role=None, **kwargs):
+        REQUIRED_ARGS = ("full_name", "email", "password", "phone", "role")
 
-        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone, "role": role, "employer": employer}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone, "role": role}, REQUIRED_ARGS)
 
         # Create role first. If a role already exists, we don't create it again.
         role = Role.active_objects.get_or_create(title=role)[0]
 
-        employer = Employer.objects.get_or_create(employer_code=employer)[0]
+        # employer = Employer.objects.get_or_create(employer_code=employer)[0]
 
         # ensure that the passwords are strong enough.
         try:
@@ -29,13 +27,12 @@ class UserManager(BaseUserManager):
         except ValidationError as exc:
             # return error accessible in the appropriate field, ie password
             raise ValidationError({"password": exc.messages}) from exc
-        
+
         user = self.model(
             full_name=full_name,
             email=self.normalize_email(email),
             phone=phone,
             role=role,
-            employer=employer,
             **kwargs
         )
 
@@ -55,6 +52,26 @@ class UserManager(BaseUserManager):
 
         return admin
 
+    def create_transporter(
+            self, full_name=None, email=None, password=None, phone=None, role="transporter", **kwargs):
+        '''
+        This is the to create transporter company director/admin
+        '''
+
+        transporter = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
+
+        return transporter
+
+    def create_cargo_owner(
+            self, full_name=None, email=None, password=None, phone=None, role="cargo-owner", **kwargs):
+        '''
+        This is the to create cargoOwner company director/admin
+        '''
+
+        cargoOwner = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
+
+        return cargoOwner
+
 class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
     """
     Custom user model to be used throughout the application.
@@ -63,18 +80,13 @@ class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
     full_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
     phone = models.CharField(unique=True, max_length=50)
-    passport_number = models.CharField(unique=True, max_length=50, null=True, blank=True)
-    drivers_license = models.CharField(unique=True, max_length=50, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now=True)
     is_verified = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     # TODO: should this be nullable and blank?
     role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="users", to_field="title")
-
-    employer = models.ForeignKey("companies.Employer", related_name="employees", to_field="employer_code", on_delete=models.SET_NULL, null=True, blank=True)
-
     REQUIRED_FIELDS = ['full_name', "phone"]
     USERNAME_FIELD = 'email'
 

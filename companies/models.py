@@ -4,117 +4,74 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from authentication.models import User, UserManager
+from utils.validators import validate_file_extension
 
 
-class EmployerManager(models.Manager):
-    """
-    Manager method for the employer model.
-    """
-    pass
+class Company(models.Model):
+    # busiss deatails
+    business_name = models.CharField(max_length=20)
+    business_type = models.CharField(max_length=200, choices=[(
+        'single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')])
+    account_number = models.CharField(max_length=50)
+    prefered_currency = models.CharField(max_length=200)
+    logo = models.ImageField(upload_to='documents/')
+    contact_details = models.CharField(max_length=300)
+    location = models.CharField(
+        max_length=200, help_text='Street, City, Country')
+    company_director = models.OneToOneField(User, on_delete=models.CASCADE)
+    # operations deatails
+    operational_regions = models.CharField(max_length=30, choices=[(
+        "locals", "locals"), ('transit', 'transit'), ('both', 'both')])
+    is_active = models.BooleanField(default=False)
+    # orthers
+    person_of_contact = models.CharField(
+        max_length=200, help_text='e.g Sales Person')
+    # documents
+    certificate_of_incorporation = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
+    directors_id = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
 
-# TODO: should this be renamed to Company?
-class Employer(AbstractBaseModel, models.Model):
-    """
-    This model will simply contain all employees of a company.
-    """
-
-    employer_code = models.CharField(max_length=100, unique=True)
+    class Meta:
+        abstract = True
 
 
-    objects = EmployerManager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
-
-    def __str__(self):
-        return self.employer_code
-
-
-class CargoOwnerManager(models.Manager):
-    """
-    The manager class for the CargoOwner model. Each instance must be tied to only one Employer.
-    """
-
-    def create_cargo_owner(self, company_name=None, company_admin=None, employer_code=None, company_location=None, **kwargs):
-        """
-        The method to actually create a Cargo Owner.
-        """
-
-        REQUIRED_ARGS = ("company_name", "company_admin", "employer_code", "company_location")
-
-        enforce_all_required_arguments_are_truthy(
-            {"company_name": company_name,
-            "company_admin": company_admin,
-            "employer_code": employer_code,
-            "company_location": company_location},
-            REQUIRED_ARGS)
-
-        if not isinstance(company_admin, get_user_model()):
-            raise ValidationError({"company_admin": "Provide a user instance for the admin."})
-
-        # We either get or create a new employer if there is none.
-        employer = Employer.objects.get_or_create(employer_code=employer_code)[0]
-        
-        company = self.model(company_name=company_name, company_admin=company_admin, employer_code=employer, company_location=company_location, **kwargs)
-
-        company.save()
-        return company
-
-class CargoOwner(AbstractBaseModel, models.Model):
-    """
-    This model represents the entity that owns cargo to be transported on the platform.
-    """
-
-    company_name = models.CharField(max_length=100)
-    company_admin = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, related_name="cargo_company_admin")
-    company_location = models.ForeignKey('locations.Location', on_delete=models.CASCADE, related_name="cargo_owners")
-    employer_code = models.OneToOneField(Employer, to_field="employer_code", on_delete=models.CASCADE, related_name="cargo_company")
-
-    objects = CargoOwnerManager()
+class CargoOwnerCompany(AbstractBaseModel, Company):  # inherits from company model
+    # operations deatails
+    commodities = models.CharField(max_length=30, choices=[("Container", "Container"), (
+        'Bagged and Bulk', 'Bagged and Bulk'), ('FMCG', 'Fast-Moving Customer Goods')])
+    potential_monthly_tonnage = models.CharField(max_length=200)
+    operational_hours = models.CharField(
+        max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
     def __str__(self):
-        return self.company_name
+
+        return self.business_name
 
 
-class TransporterManager(models.Manager):
-    """
-    Contains manager methods for the Transport class.
-    """
-
-    def create_transporter(self, company_name=None, company_admin=None, employer_code=None, company_location=None, **kwargs):
-        """
-        Create a transporter
-        """
-
-        if not isinstance(company_admin, get_user_model()):
-            raise ValidationError({"company_admin": "Provide a user instance for the admin."})
-
-        REQUIRED_ARGS = ("company_name", "company_admin", "employer_code", "copmany_location")
-
-        enforce_all_required_arguments_are_truthy({"company_name": company_name, "company_admin": company_admin, "employer_code": employer_code, "company_location": company_location}, REQUIRED_ARGS)
-
-        employer = Employer.objects.get_or_create(employer_code=employer_code)[0]
-
-        transporter = self.model(company_admin=company_admin, company_name=company_name, employer_code=employer, company_location=company_location, **kwargs)
-
-        transporter.save()
-        return transporter
-
-
-class Transporter(AbstractBaseModel, models.Model):
-    """
-    This model represents a Transporter.
-    """
-
-    company_name = models.CharField(max_length=100)
-    company_admin = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, related_name="transporter_company_admin")
-
-    company_location = models.ForeignKey('locations.Location', on_delete=models.CASCADE, related_name="transporters")
-    employer_code = models.OneToOneField(Employer, to_field="employer_code", on_delete=models.CASCADE, related_name="transporter_company")
-
-    objects = TransporterManager()
+class TransporterCompany(AbstractBaseModel, Company):
+    # operations deatails
+    number_of_trucks = models.CharField(
+        max_length=200, help_text='truck types + quantity')
+    number_of_drivers = models.PositiveIntegerField()
+    # documents
+    truck_log_books = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
+    goods_in_transit_insurance = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
+    tax_compliance_certificate = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
+    ntsa_inspection_certificates = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
+    icdn_or_port_passes = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension], null=True, blank=True)
+    cross_boarder_operation = models.FileField(
+        upload_to="documents/", validators=[validate_file_extension])
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
     def __str__(self):
-        return self.company_name
+        return self.business_name

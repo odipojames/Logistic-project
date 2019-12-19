@@ -10,8 +10,8 @@ Explore
 1
 00abdilatifbashir/ss_booking Private
  Code Issues 1 Pull requests 3 Actions Projects 0 Wiki Security Insights
-ss_booking/.gitignore
- novak license and gitgnore
+Logistic-project/.gitignore
+ james license and gitgnore
 f5222e4 on Sep 5
 106 lines (86 sloc)  1.19 KB
 
@@ -22,6 +22,8 @@ __pycache__/
 
 # C extensions
 *.so
+!**/migrations/
+.gitignore
 
 # Distribution / packaging
 .Python

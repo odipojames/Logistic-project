@@ -15,7 +15,7 @@ def enforce_all_required_arguments_are_truthy(kwargs, required_args):
     create loops to check if each condition is truthy:
         ...
         if not a:
-            raise Exception 
+            raise Exception
         ...etc
 
     This function loops through the passed kwargs(dict) and ensures that they are not empty and that they are truthy.
@@ -37,7 +37,7 @@ def get_errored_integrity_field(exc):
 
     if not isinstance(exc, IntegrityError):
         pass
-    
+
     # example of Integrity error string:
     # 'duplicate key value violates unique constraint
     # "authentication_user_passport_number_key"\nDETAIL:  Key (passport_number)

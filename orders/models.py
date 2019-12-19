@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from companies.models import  CargoOwnerCompany
 
 
 class OrderManager(models.Manager):
@@ -94,7 +95,7 @@ class Order(AbstractBaseModel, models.Model):
     order_type = models.CharField(
         max_length=5, choices=ORDER_TYPES, default="SO-SD")
     desired_truck_type = models.CharField(max_length=50)
-    owner = models.ForeignKey("companies.CargoOwner", on_delete=models.CASCADE, related_name="orders")
+    owner = models.ForeignKey(CargoOwnerCompany, on_delete=models.CASCADE, related_name="orders")
     # TODO Must the recepients be registered on our application? If so, change this to ForeignKey
     recepients = ArrayField(models.CharField(
         blank=True, null=True, max_length=100), size=MAX_RECEPIENT_COUNT)
@@ -108,14 +109,14 @@ class Order(AbstractBaseModel, models.Model):
 
     def __str__(self):
         return f"{self.title} order by {self.owner}."
-    
+
     def clean(self):
         RATE_CHOICES = ("per_tonne", "per_km_per_tonne", "per_truck_load")
 
         for key in RATE_CHOICES:
             if key not in self.desired_rates.keys():
                 raise ValidationError({"desired_rates": f"{key} must be provided."})
-        
+
         # if a key is passed that shouldn't be included, we remove it.
         for key in self.desired_rates.copy().keys():
             if key not in RATE_CHOICES:
@@ -149,7 +150,7 @@ class CargoOwnerInvoice(AbstractBaseModel, models.Model):
     """
     This represents invoices sent to Cargo Owners.
     """
-    
+
     order = models.ForeignKey(Order, to_field="tracking_id", on_delete=models.CASCADE)
     number_of_trips = models.IntegerField()
     description = models.CharField(max_length=1000)
@@ -171,7 +172,7 @@ class CargoOwnerInvoice(AbstractBaseModel, models.Model):
         for key in RATE_CHOICES:
             if key not in self.charges.keys():
                 raise ValidationError({"charges": f"{key} must be provided."})
-        
+
         # if a key is passed that shouldn't be included, we remove it.
         for key in self.charges.copy().keys():
             if key not in RATE_CHOICES:

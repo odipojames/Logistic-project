@@ -86,7 +86,6 @@ def logout_view(request):
         }
 
         return Response(response, status=status.HTTP_200_OK)
-    
+
     except TokenError:
         return Response({"detail": "You are already logged out."}, status=status.HTTP_400_BAD_REQUEST)
-    
