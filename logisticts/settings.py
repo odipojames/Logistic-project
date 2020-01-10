@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'locations.apps.LocationsConfig',
     'orders.apps.OrdersConfig',
     'trips.apps.TripsConfig',
+    'cargo_types.apps.CargoTypesConfig',
     'rates.apps.RatesConfig',
     # third-party apps
     'rest_framework',
