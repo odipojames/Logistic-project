@@ -24,7 +24,7 @@ __pycache__/
 *.so
 !**/migrations/
 .gitignore
-
+serializer.py
 # Distribution / packaging
 .Python
 build/

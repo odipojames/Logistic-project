@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'locations.apps.LocationsConfig',
     'orders.apps.OrdersConfig',
     'trips.apps.TripsConfig',
+    'rates.apps.RatesConfig',
     # third-party apps
     'rest_framework',
     'django_extensions',
