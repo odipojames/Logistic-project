@@ -8,14 +8,14 @@ from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
 
 
-class LocationManager(models.Manager):
+class DepotManager(models.Manager):
     """
-    Manager to handle methods of the Location model.
+    Manager to handle methods of the Depot model.
     """
 
-    def create_location(self, city=None, address=None, street=None, state=None, coordinates=None, user=None):
+    def create_depot(self, city=None, address=None, street=None, state=None, coordinates=None, user=None):
         """
-        Method to create and return location instances.
+        Method to create and return depot instances.
         """
 
         REQUIRED_ARGS = ("coordinates", "user")
@@ -26,25 +26,25 @@ class LocationManager(models.Manager):
             raise ValidationError({"user": "Provide a valid user instance for user."})
 
 
-        location = self.model(city=city, address=address, street=street, state=state, coordinates=coordinates, user=user)
+        depot = self.model(city=city, address=address, street=street, state=state, coordinates=coordinates, user=user)
 
-        location.clean()
-        location.save()
-        return location
+        depot.clean()
+        depot.save()
+        return depot
 
-class Location(AbstractBaseModel, models.Model):
+class Depot(AbstractBaseModel, models.Model):
     """
-    This defines the data about a specific location.
+    This defines the data about a specific depot.
     """
 
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="locations")
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="Depots")
     city = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=50, null=True, blank=True)
     street = models.CharField(max_length=50, null=True, blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
     coordinates = HStoreField()
 
-    objects = LocationManager()
+    objects = DepotManager()
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
@@ -63,7 +63,7 @@ class Location(AbstractBaseModel, models.Model):
                 raise ValidationError({key: f"{key} is required."})
             elif not self.coordinates[key]:
                 raise ValidationError({key: f"{key} cannot be empty."})
-        
+
         # remove any unnecessary keys being passed here
         self.coordinates = {"lattitude": self.coordinates.get("lattitude"),
         "longitude": self.coordinates.get("longitude")}

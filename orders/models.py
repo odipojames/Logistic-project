@@ -26,17 +26,17 @@ class OrderManager(models.Manager):
         # We ensure that origin and destination are passed in either a tuple or list
 
         if origin and (not isinstance(origin, list) and not isinstance(origin, tuple)):
-            raise ValidationError({"origin": "Could not save origin. Please pass a list or tuple containing one or more location instances for origin."})
+            raise ValidationError({"origin": "Could not save origin. Please pass a list or tuple containing one or more depot instances for origin."})
 
         if destination and (not isinstance(destination, list) and not isinstance(destination, tuple)):
-            raise ValidationError({"destination": "Could not save destination. Please pass a list or tuple containing one or more location instances for destination."})
+            raise ValidationError({"destination": "Could not save destination. Please pass a list or tuple containing one or more depot instances for destination."})
 
         REQUIRED_ARGS = ("title", "description", "cargo_type", "cargo_tonnage", "loading_point_contact", "loading_point_contact_name",
                          "offloading_point_contact_name", "offloading_point_contact", "desired_rates", "desired_truck_type", "owner", "recepients", "origin", "destination")
 
         enforce_all_required_arguments_are_truthy(kwargs, REQUIRED_ARGS)
 
-        # pop out locations because they can only be added once the model is saved.
+        # pop out depots because they can only be added once the model is saved.
         kwargs.pop("origin", None)
         kwargs.pop("destination", None)
 
@@ -80,9 +80,9 @@ class Order(AbstractBaseModel, models.Model):
     cargo_type = models.CharField(max_length=100)  # should this be choices?
     cargo_tonnage = models.DecimalField(max_digits=12, decimal_places=4)
     origin = models.ManyToManyField(
-        "locations.Location", blank=True, related_name="sent_orders")
+        "depots.Depot", blank=True, related_name="sent_orders")
     destination = models.ManyToManyField(
-        "locations.Location", blank=True, related_name="received_orders")
+        "depots.Depot", blank=True, related_name="received_orders")
     loading_point_contact = models.CharField(
         max_length=100, help_text="Contact information for the contact person at the Loading point.")
     loading_point_contact_name = models.CharField(max_length=100)

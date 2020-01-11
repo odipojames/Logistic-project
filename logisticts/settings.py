@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'companies.apps.CompaniesConfig',
     'authentication.apps.AuthenticationConfig',
     'utils.apps.UtilsConfig',
-    'locations.apps.LocationsConfig',
+    'depots.apps.DepotsConfig',
     'orders.apps.OrdersConfig',
     'trips.apps.TripsConfig',
     'cargo_types.apps.CargoTypesConfig',

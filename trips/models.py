@@ -58,9 +58,9 @@ class Trip(AbstractBaseModel, models.Model):
         "orders.Order", related_name="trips", on_delete=models.CASCADE)
     trucks = models.ManyToManyField("Truck", related_name="trips")
     origin = models.ForeignKey(
-        "locations.Location", related_name="trip_origins", on_delete=models.CASCADE)
+        "depots.Depot", related_name="trip_origins", on_delete=models.CASCADE)
     destination = models.ForeignKey(
-        "locations.Location", related_name="trip_destinations", on_delete=models.CASCADE)
+        "depots.Depot", related_name="trip_destinations", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=1, choices=STATUS_CHOICES, default="P")
     offloading_point_contact = models.CharField(max_length=100)
