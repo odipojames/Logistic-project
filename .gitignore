@@ -1,20 +1,3 @@
-Skip to content
-ab
-
-Pull requests
-Issues
-Marketplace
-Explore
-
-@odipojames
-1
-00abdilatifbashir/ss_booking Private
- Code Issues 1 Pull requests 3 Actions Projects 0 Wiki Security Insights
-Logistic-project/.gitignore
- james license and gitgnore
-f5222e4 on Sep 5
-106 lines (86 sloc)  1.19 KB
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -125,15 +108,5 @@ venv.bak/
 .mypy_cache/
 .vscode/
 .idea/
-© 2019 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+
+media/
