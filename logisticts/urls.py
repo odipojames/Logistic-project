@@ -48,7 +48,9 @@ urlpatterns = [
     path('', RedirectView.as_view(url='api/v1/docs/',
                                   permanent=False),
          name='api_documentation'),
+    path('api/v1/transporter/', include('transporter.urls')),       
 ]
+
 
 if settings.DEBUG:
     urlpatterns+= static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

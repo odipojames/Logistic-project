@@ -71,6 +71,18 @@ class UserManager(BaseUserManager):
         cargoOwner = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
 
         return cargoOwner
+    
+    def create_driver(
+            self, full_name=None, email=None, phone=None, is_verified=True, password=None, role="driver",  **kwargs):
+        '''
+        This is the to create the driver
+        '''
+
+        driver = self.create_user(full_name=full_name, email=email, is_verified=is_verified,role=role, password=password, phone=phone, is_superuser=False, is_active=True)
+
+        driver.is_verified = True
+        return driver
+
 
 class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
     """

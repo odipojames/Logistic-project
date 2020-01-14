@@ -1,3 +1,5 @@
+import random 
+import string
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -67,3 +69,8 @@ def blacklist_user_outstanding_tokens(user_instance):
         except TokenError:
         # a token error is raised if the tokens are already blacklisted. We don't need to do anything in that case.
             pass
+
+def random_password(self, N=10):
+        random_password = ''.join(random.choices(string.ascii_lowercase +
+                                            string.digits, k=N)) 
+        return random_password
