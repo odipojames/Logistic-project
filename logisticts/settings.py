@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'trips.apps.TripsConfig',
     'cargo_types.apps.CargoTypesConfig',
     'rates.apps.RatesConfig',
+    'assets.apps.AssetsConfig',
     # third-party apps
     'rest_framework',
     'django_extensions',
