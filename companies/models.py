@@ -77,7 +77,7 @@ class TransporterCompany(AbstractBaseModel, Company):
         return self.business_name
 
     class PersonOfContact(AbstractBaseModel):
-        company = models.ForeignKey(TransporterCompany, related_name='company', on_delete=models.CASCADE)
+        company = models.ForeignKey('TransporterCompany', related_name='company', on_delete=models.CASCADE)
         name = models.CharField(max_length=100)
         email = models.EmailField()
         phone = models.CharField(max_length=20)
