@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import make_aware
-from django.contrib.postgres.fields import HStoreField
+from django.contrib.postgres.fields import HStoreField, ArrayField
 
 from companies.models import TransporterCompany,CargoOwnerCompany
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
@@ -56,21 +56,21 @@ class Trip(AbstractBaseModel, models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
     order = models.ForeignKey(
         "orders.Order", related_name="trips", on_delete=models.CASCADE)
-    trucks = models.ManyToManyField("Truck", related_name="trips")
+    truck = models.ForeignKey(
+        "Truck", related_name="trips", on_delete=models.CASCADE)
     origin = models.ForeignKey(
         "depots.Depot", related_name="trip_origins", on_delete=models.CASCADE)
     destination = models.ForeignKey(
         "depots.Depot", related_name="trip_destinations", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=1, choices=STATUS_CHOICES, default="P")
-    offloading_point_contact = models.CharField(max_length=100)
-    offloading_point_contact_name = models.CharField(max_length=100)
-    loading_point_contact = models.CharField(max_length=100)
-    loading_point_contact_name = models.CharField(max_length=100)
     description = models.CharField(max_length=1000)
     # Do we need a trip number? So as to identify each trip for an order?
     trip_number = models.IntegerField()
     transporter = models.ForeignKey(TransporterCompany, on_delete=models.CASCADE, related_name="trips")
+    tracking_data = ArrayField(base_field=models.CharField(max_length=50), blank=True) 
+    offloading_point_contact = models.ForeignKey("companies.PointOfContact", on_delete=models.CASCADE)
+    loading_point_contact = models.ForeignKey("companies.PointOfContact", on_delete=models.CASCADE)
 
     objects = TripManager()
     active_objects = ActiveObjectsQuerySet.as_manager()

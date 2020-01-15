@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from companies.models import CargoOwnerCompany
 
 
 class CargoTypeManager(models.Manager):

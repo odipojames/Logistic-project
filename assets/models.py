@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from utils.validators import validate_file_extension
 
 # Create your models here.
 
@@ -55,6 +56,8 @@ class Truck(AbstractBaseModel, Asset, models.Model):
     """
     type = models.CharField(
         max_length=200, choices=[('flatbed', 'flatbed'), ('double diff', 'double diff'), ('skeleton', 'skeleton')])
+    truck_log_books = models.FileField(
+    upload_to="documents/", validators=[validate_file_extension])
 
     objects = AssetManager()
     active_objects = ActiveObjectsQuerySet.as_manager()
