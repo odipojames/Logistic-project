@@ -47,7 +47,7 @@ urlpatterns = [
     path('api/v1/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-documentation'),
     path('', RedirectView.as_view(url='api/v1/docs/',
                                   permanent=False),
-         name='api_documentation'),
+         name='api-documentation'),
     path('api/v1/transporter/', include('transporter.urls')),       
 ]
 

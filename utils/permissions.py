@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from companies.models import TransporterCompany
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     '''
@@ -25,3 +26,11 @@ class IsTransporterOrAdmin(permissions.BasePermission):
     
     def has_permission(self, request, view):
         return str(request.user.role) == "transporter" or str(request.user.role) == "superuser"
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Object level permission. Only directors and superusers can trigger this permission.
+        """
+        user = request.user
+        
+        return user.is_superuser or obj.company.company_director == user
