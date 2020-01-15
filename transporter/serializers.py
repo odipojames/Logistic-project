@@ -14,12 +14,11 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
     role = serializers.CharField(default="driver")
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'role', 'phone']
-        
+        fields = ['id', 'full_name', 'email', 'role', 'phone']     
 
 class DriverSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of Driver objects."""
-    user = DriverRegistrationSerializer(read_only=True)
+    user = DriverRegistrationSerializer()
    
     class Meta:
         model = Driver
@@ -45,5 +44,29 @@ class DriverSerializer(serializers.ModelSerializer):
                   recipient_list, fail_silently=False)   
         
         return driver
+
+    def update(self, instance, validated_data):
+        """
+        Override this method so that driver information is properly updated.
+        """
+
+        driver_user_data = validated_data.pop('user', None)
+
+        # if driver data needs to be updated, it is update at this
+        # stage. Because it is nested, we have to manually update
+        # it.
+        if driver_user_data:
+
+            request = self.context.get('request')
+            driver_id = request.resolver_match.kwargs.get('id')
+            # get the user instance we want to update
+            user_instance = Driver.active_objects.get(pk=driver_id).user
+            driver_serializer = DriverRegistrationSerializer(data=driver_user_data, partial=True)
+            driver_serializer.is_valid(raise_exception=True)
+            # update user instance
+            driver_serializer.update(user_instance, driver_user_data)
+        
+        # now proceed to update the driver instance
+        return super().update(instance, validated_data)
        
         

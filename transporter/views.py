@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from utils.permissions import IsTransporterOrAdmin
 from companies.models import TransporterCompany
 from .models import Driver
-from .serializers import DriverSerializer
+from .serializers import DriverSerializer, DriverRegistrationSerializer
 
 
     
@@ -69,21 +69,34 @@ class DriverDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Driver.active_objects.for_transporter(company=company)
 
     def update(self, request, **kwargs):
-        kwargs['partial'] = True
-        response = super().update(request, **kwargs)
+        """
+        Update the driver instance. The driver's user instance is
+        also updated at this stage if any information needs to be
+        updated.
+        """
 
-        # logic for suspending driver.
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+
+        kwargs['partial'] = True
+
+        serializer = self.get_serializer(obj, data=request.data, partial=True) 
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # logic for suspending and unsuspending driver.
         suspend = request.data.get('suspend')
 
-        if suspend and suspend.lower() == 'true': 
-            obj = self.get_object()
-            self.check_object_permissions(request, obj)
-            obj.user.is_active = False
+        if suspend:
+            if suspend.lower() == 'true':
+                obj.user.is_active = False
+            elif suspend.lower() == 'false':
+                obj.user.is_active = True
             obj.user.save()
 
         message = "Driver succesfully updated."
 
-        payload = response.data.copy()
+        payload = serializer.data.copy()
         payload['message'] = message
 
         return Response(payload, status=status.HTTP_200_OK)
