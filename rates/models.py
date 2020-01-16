@@ -35,6 +35,7 @@ class Rate(AbstractBaseModel, models.Model):
     prefered_currency = models.CharField(
         max_length=20, choices=[('USD', 'USD'), ('KES', 'KES')])
     # Generic relations https://docs.djangoproject.com/en/2.2/ref/contrib/contenttypes/#id1
+    created_by = models.ForeignKey('companies.CargoOwnerCompany', on_delete=models.CASCADE)
 
     
     objects = RatesManager()

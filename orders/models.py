@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
-from companies.models import  CargoOwnerCompany
 
 
 class OrderManager(models.Manager):
@@ -77,25 +76,22 @@ class Order(AbstractBaseModel, models.Model):
 
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=1000)
-    cargo_type = models.CharField(max_length=100)  # should this be choices?
-    cargo_tonnage = models.DecimalField(max_digits=12, decimal_places=4)
+    commodity = models.ForeignKey("cargo_types.Commodity", on_delete=models.CASCADE)
+    cargo_tonnage = models.DecimalField(max_digits=12, decimal_places=4, blank=True, null=True)
     origin = models.ManyToManyField(
         "depots.Depot", blank=True, related_name="sent_orders")
     destination = models.ManyToManyField(
         "depots.Depot", blank=True, related_name="received_orders")
-    loading_point_contact = models.CharField(
-        max_length=100, help_text="Contact information for the contact person at the Loading point.")
-    loading_point_contact_name = models.CharField(max_length=100)
-    offloading_point_contact = models.CharField(max_length=100)
-    offloading_point_contact_name = models.CharField(max_length=100)
+    loading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='loading_orders')
+    offloading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='offloading_orders')
     status = models.CharField(
         max_length=2, choices=STATUS_CHOICES, default="PD")
-    desired_rates = HStoreField()
+    desired_rates = models.ForeignKey('rates.Rate', on_delete=models.CASCADE)
     recurring_order = models.BooleanField(default=False)
     order_type = models.CharField(
         max_length=5, choices=ORDER_TYPES, default="SO-SD")
     desired_truck_type = models.CharField(max_length=50)
-    owner = models.ForeignKey(CargoOwnerCompany, on_delete=models.CASCADE, related_name="orders")
+    owner = models.ForeignKey('companies.CargoOwnerCompany', on_delete=models.CASCADE, related_name="orders")
     # TODO Must the recepients be registered on our application? If so, change this to ForeignKey
     recepients = ArrayField(models.CharField(
         blank=True, null=True, max_length=100), size=MAX_RECEPIENT_COUNT)

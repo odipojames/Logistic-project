@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
-from companies.models import CargoOwnerCompany
 
 
 class CargoTypeManager(models.Manager):
@@ -18,12 +17,12 @@ class CargoTypeManager(models.Manager):
         method to create cargo type
         """
 
-        REQUIRED_ARGS = ('cargo_type', )
+        REQUIRED_ARGS = ('name', 'description')
 
         enforce_all_required_arguments_are_truthy(
-            {'cargo_type': cargo_type, }, REQUIRED_ARGS)
+            {'name': name, 'description': description}, REQUIRED_ARGS)
 
-        cargo_type = self.model(cargo_type=cargo_type)
+        cargo_type = self.model(name=name, description=description)
         cargo_type.save()
         return cargo_type
 
@@ -33,7 +32,7 @@ class CargoTypeManager(models.Manager):
         """
         REQUIRED_ARGS = ('name', 'description', 'owned_by', 'cargo_type')
         enforce_all_required_arguments_are_truthy(
-            {'name': name, 'description': description, 'owned_by': owned_by, 'cargo_type': cargo_type})
+            {'name': name, 'description': description, 'owned_by': owned_by, 'cargo_type': cargo_type}, REQUIRED_ARGS)
         commodity = self.model(
             name=name, description=description, cargo_type=cargo_type)
         commodity.save()

@@ -57,7 +57,7 @@ class Trip(AbstractBaseModel, models.Model):
     order = models.ForeignKey(
         "orders.Order", related_name="trips", on_delete=models.CASCADE)
     truck = models.ForeignKey(
-        "Truck", related_name="trips", on_delete=models.CASCADE)
+        "assets.Truck", related_name="trips", on_delete=models.CASCADE)
     origin = models.ForeignKey(
         "depots.Depot", related_name="trip_origins", on_delete=models.CASCADE)
     destination = models.ForeignKey(
@@ -69,8 +69,8 @@ class Trip(AbstractBaseModel, models.Model):
     trip_number = models.IntegerField()
     transporter = models.ForeignKey(TransporterCompany, on_delete=models.CASCADE, related_name="trips")
     tracking_data = ArrayField(base_field=models.CharField(max_length=50), blank=True) 
-    offloading_point_contact = models.ForeignKey("companies.PointOfContact", on_delete=models.CASCADE)
-    loading_point_contact = models.ForeignKey("companies.PointOfContact", on_delete=models.CASCADE)
+    offloading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='offloading_trips')
+    loading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='loading_trips')
 
     objects = TripManager()
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -95,54 +95,54 @@ class Trip(AbstractBaseModel, models.Model):
         return super().clean()
 
 
-class TruckManager(models.Manager):
-    """
-    Manager class for the Truck model.
-    """
+# class TruckManager(models.Manager):
+#     """
+#     Manager class for the Truck model.
+#     """
 
-    def create_truck(self, truck_type=None, max_tonnage=None, plate_number=None, owner=None, drivers=None):
-        """
-        Create an actual truck.
-        """
+#     def create_truck(self, truck_type=None, max_tonnage=None, plate_number=None, owner=None, drivers=None):
+#         """
+#         Create an actual truck.
+#         """
 
-        REQUIRED_ARGS = ("truck_type", "max_tonnage", "plate_number", "owner")
+#         REQUIRED_ARGS = ("truck_type", "max_tonnage", "plate_number", "owner")
 
-        if drivers and (not isinstance(drivers, list) and not isinstance(drivers, tuple)):
-            raise ValidationError({"drivers": "Could not save drivers. Please pass a list or tuple containing one or more user instances for drivers."})
+#         if drivers and (not isinstance(drivers, list) and not isinstance(drivers, tuple)):
+#             raise ValidationError({"drivers": "Could not save drivers. Please pass a list or tuple containing one or more user instances for drivers."})
 
-        enforce_all_required_arguments_are_truthy({"truck_type": truck_type, "max_tonnage": max_tonnage, "plate_number": plate_number, "owner": owner}, REQUIRED_ARGS)
+#         enforce_all_required_arguments_are_truthy({"truck_type": truck_type, "max_tonnage": max_tonnage, "plate_number": plate_number, "owner": owner}, REQUIRED_ARGS)
 
-        if not isinstance(owner, Transporter):
-            raise ValidationError({"owner": "Provide a valid transporter instance for owner."})
+#         if not isinstance(owner, TransporterCompany):
+#             raise ValidationError({"owner": "Provide a valid transporter instance for owner."})
 
-        truck = self.model(truck_type=truck_type, max_tonnage=max_tonnage, plate_number=plate_number, owner=owner)
+#         truck = self.model(truck_type=truck_type, max_tonnage=max_tonnage, plate_number=plate_number, owner=owner)
 
-        truck.save()
+#         truck.save()
 
-        if drivers:
-            # TODO ensure that drivers must be employees of the transporter.
-            truck.drivers.set(drivers)
+#         if drivers:
+#             # TODO ensure that drivers must be employees of the transporter.
+#             truck.drivers.set(drivers)
 
-        return truck
+        # return truck
 
 
-class Truck(AbstractBaseModel, models.Model):
-    """
-    Class representing the Truck model.
-    """
+# class Truck(AbstractBaseModel, models.Model):
+#     """
+#     Class representing the Truck model.
+#     """
 
-    truck_type = models.CharField(max_length=50)
-    plate_number = models.CharField(max_length=15, unique=True)
-    # TODO should this be a ForeignKey instead?
-    drivers = models.ManyToManyField(get_user_model(), related_name="trucks")
-    owner = models.ForeignKey(TransporterCompany, related_name="trucks", on_delete=models.CASCADE)
-    max_tonnage = models.DecimalField(max_digits=8, decimal_places=4)
+#     truck_type = models.CharField(max_length=50)
+#     plate_number = models.CharField(max_length=15, unique=True)
+#     # TODO should this be a ForeignKey instead?
+#     drivers = models.ManyToManyField(get_user_model(), related_name="trucks")
+#     owner = models.ForeignKey(TransporterCompany, related_name="trucks", on_delete=models.CASCADE)
+#     max_tonnage = models.DecimalField(max_digits=8, decimal_places=4)
 
-    objects = TruckManager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
+#     objects = TruckManager()
+#     active_objects = ActiveObjectsQuerySet.as_manager()
 
-    def __str__(self):
-        return f"Truck no. {self.plate_number} for {self.owner.company_name}."
+#     def __str__(self):
+#         return f"Truck no. {self.plate_number} for {self.owner.company_name}."
 
 
 class TripInvoiceManager(models.Manager):
