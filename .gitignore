@@ -110,3 +110,9 @@ venv.bak/
 .idea/
 
 media/
+lib64
+pip-selfcheck.json
+pyvenv.cfg
+bin/
+rates/migrations/0001_initial.py
+share/man/man1/ipython.1.gz
