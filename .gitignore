@@ -110,6 +110,7 @@ venv.bak/
 .idea/
 
 media/
+static/
 lib64
 pip-selfcheck.json
 pyvenv.cfg
