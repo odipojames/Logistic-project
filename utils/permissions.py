@@ -1,13 +1,18 @@
 from rest_framework import permissions
 from companies.models import TransporterCompany
+from rest_framework.permissions import SAFE_METHODS
+
 
 class IsAdminOrReadOnly(permissions.BasePermission):
-    '''
-    shipper permissions
-    '''
-    message = 'you must be a shipper to permform this'
+    """
+    to allow only admit to delete update and post
+    """
+    message = 'you must be shypper admin to perform this'
     def has_permission(self, request, view):
-        return request.user.role=='SA'
+        if request.method in SAFE_METHODS:
+            return True
+        else:
+            return str(request.user.role) == 'superuser'
 
 
 class IsAllowedToOrder(permissions.BasePermission):
@@ -16,21 +21,24 @@ class IsAllowedToOrder(permissions.BasePermission):
     '''
     message = 'you must be a cargo Owner to permform this'
     def has_permission(self, request, view):
-        return request.user.role == "CO"
+        return request.user.role == "carogo-owner"
 
 class IsTransporterOrAdmin(permissions.BasePermission):
     '''
     permissions for creating and getting drivers
     '''
     message = 'you must be a transporter or superuser to perform this'
-    
+
     def has_permission(self, request, view):
         return str(request.user.role) == "transporter" or str(request.user.role) == "superuser"
 
-    def has_object_permission(self, request, view, obj):
-        """
-        Object level permission. Only directors and superusers can trigger this permission.
-        """
-        user = request.user
-        
-        return user.is_superuser or obj.company.company_director == user
+
+class IsAdminOrCargoOwner(permissions.BasePermission):
+    """
+    check if shyper or cargo owner admin
+    """
+    message = 'you must be a cargo owner or superuser to perform this'
+
+    def has_permission(self, request, view):
+
+        return str(request.user.role) == "cargo-owner" or str(request.user.role) == "superuser"

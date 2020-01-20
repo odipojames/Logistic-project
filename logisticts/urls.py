@@ -48,8 +48,9 @@ urlpatterns = [
     path('api/v1/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', RedirectView.as_view(url='api/v1/docs/',
                                   permanent=False),
-         name='api-documentation'),
-    path('api/v1/transporter/', include('transporter.urls')),       
+         name='api_documentation'),
+    path('api/v1/transporter/', include('transporter.urls')),
+    path('api/v1/cargo_types/', include('cargo_types.urls')),
 ]
 
 
