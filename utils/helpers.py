@@ -1,5 +1,7 @@
 import random 
 import string
+import csv
+import io
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -74,3 +76,12 @@ def random_password(self, N=10):
         random_password = ''.join(random.choices(string.ascii_lowercase +
                                             string.digits, k=N)) 
         return random_password
+
+def read_csv(csv_file):
+    """
+    Takes a csv in memory file object and returns an iterable with each csv line
+    """
+    data_set = csv_file.read().decode('UTF-8')
+    io_string = io.StringIO(data_set)
+    next(io_string) #jump header line
+    return csv.reader(io_string, delimiter=',')

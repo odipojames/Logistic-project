@@ -50,7 +50,8 @@ urlpatterns = [
                                   permanent=False),
          name='api_documentation'),
     path('api/v1/transporter/', include('transporter.urls')),
-    path('api/v1/cargo_types/', include('cargo_types.urls')),
+    path('api/v1/cargo_types/', include('cargo_types.urls')), 
+    path('api/v1/assets/', include('assets.urls')),
 ]
 
 
