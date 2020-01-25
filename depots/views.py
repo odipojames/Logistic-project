@@ -46,7 +46,7 @@ class DepotList(generics.ListCreateAPIView):
 
 class DepotRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """retrival,deleting and updating depots"""
-    permission_classes = (IsAdminOrCargoOwner,)
+    permission_classes = (IsAdminOrCargoOwner | IsAdminOrReadOnly,)
     serializer_class = DepotSerializer
     renderer_classes = (JsnRenderer,)
 
@@ -70,8 +70,10 @@ class DepotRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, pk):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
+        data = request.data
+        data.pop('user')
         serializer = self.serializer_class(
-            obj, request.data, partial=True)
+            obj,data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {

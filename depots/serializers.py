@@ -13,6 +13,4 @@ class DepotSerializer(serializers.ModelSerializer):
     def create(self,validated_data):
         return Depot.objects.create_depot(**validated_data)
 
-    def update(self, instance, validated_data):
-        validated_data.pop('user') # removing user from being updated
-        return super().update(instance, validated_data)
+    
