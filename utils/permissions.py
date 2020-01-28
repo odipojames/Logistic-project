@@ -43,7 +43,6 @@ class IsAdminOrCargoOwner(permissions.BasePermission):
     message = 'you dont have an access to this action'
 
     def has_permission(self, request, view):
-
         if request.method in SAFE_METHODS:
             return True
         else:
@@ -54,6 +53,34 @@ class IsAdminOrCargoOwner(permissions.BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return obj.user == request.user
+
+
+class IsShyperAdmin(permissions.BasePermission):
+    message = 'you must be shyper admin to perform this'
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and str(request.user.role) == 'superuser'
+
+
+class IsAdminOrCompanyOwner(permissions.BasePermission):
+    """
+    check if shyper or cargo owner admin
+    """
+    message = 'you must be a cargo owner who owns the obj to perform this'
+
+    def has_permission(self, request, view):
+
+        return (
+            request.user.is_authenticated and (
+                str(request.user.role) == "cargo-owner" or
+                str(request.user.role) == "transporter" or
+                str(request.user.role) == "superuser")
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return obj.company_director == user or user.is_superuser
+
 
 class IsAdminOrCargoOwnerRates(permissions.BasePermission):
     """

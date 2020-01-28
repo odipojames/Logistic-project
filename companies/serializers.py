@@ -22,6 +22,18 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
             company_director=user, **validated_data)
         return company
 
+    def update(self, instance, validated_data):
+        company_director_data = validated_data.pop('company_director')
+
+        if company_director_data:
+            company_director = instance.company_director
+            serializer = CargoOwnerRegistrationSerializer(
+                data=company_director_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.update(company_director, company_director_data)
+
+        return super().update(instance, validated_data)
+
 
 class TransporterSerializer(serializers.ModelSerializer):
     '''create transport company and its admin who is the dirctor in this case'''
@@ -39,6 +51,20 @@ class TransporterSerializer(serializers.ModelSerializer):
         company = TransporterCompany.active_objects.create(
             company_director=user, **validated_data)
         return company
+
+    def update(self, instance, validated_data):
+
+        company_director_data = validated_data.pop('company_director')
+
+        if company_director_data:
+            company_director = instance.company_director
+            serializer = TransporterRegistrationSerializer(
+                data=company_director_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.update(company_director, company_director_data)
+
+        return super().update(instance, validated_data)
+
 
 class PersonofContactSerializer(serializers.ModelSerializer):
     """
