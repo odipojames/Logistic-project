@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from companies.models import TransporterCompany
+from companies.models import TransporterCompany, CargoOwnerCompany
 from rest_framework.permissions import SAFE_METHODS
 
 
@@ -54,3 +54,22 @@ class IsAdminOrCargoOwner(permissions.BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return obj.user == request.user
+
+class IsAdminOrCargoOwnerRates(permissions.BasePermission):
+    """
+    allow only cargo owners and admin to perform spacific actions
+    """
+    message = 'you dont have an access to this action'
+
+    def has_permission(self, request, view):
+
+        if request.method in SAFE_METHODS:
+            return True
+        else:
+            return str(request.user.role) == "cargo-owner" or str(request.user.role) == "superuser"
+
+    def has_object_permission(self, request, view, obj):
+        """allow only owner or admin to delete and uptade depots"""
+        if request.method in SAFE_METHODS:
+            return True
+        return obj.created_by.company_director == request.user or str(request.user.role) == 'superuser'

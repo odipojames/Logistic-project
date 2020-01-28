@@ -8,9 +8,26 @@ from authentication.models import User, UserManager
 from utils.validators import validate_file_extension, validate_international_phone_number
 from cargo_types.models import Commodity
 
+class PersonOfContactManager(models.Manager):
+    """
+    Points of Contact manager for cargo owner to creating
+    people to contact
+    """
+    def create_person_of_contact(self, company=None, name=None, email=None, phone=None):
+        REQUIRED_ARGS = ('company','name', 'phone')
+        enforce_all_required_arguments_are_truthy({'company' : company, 'name' : name, 'email' : email, 'phone' : phone}, REQUIRED_ARGS)
+        person_of_contact = self.model(company=company, name=name, email=email, phone=phone)
+        person_of_contact.save()
+        return person_of_contact
+
+class PersonOfContactQuerySet(ActiveObjectsQuerySet):
+    """Queryset to be used by PersonOfContact model"""
+    def get_person_of_contact(self, company=None):
+        """returns person of contact a specific transporer"""
+        return self._active().filter(company=company)
 
 class Company(models.Model):
-    # busiss deatails
+    # business details
     business_name = models.CharField(max_length=20)
     business_type = models.CharField(max_length=200, choices=[(
         'single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')])
@@ -73,11 +90,16 @@ class TransporterCompany(AbstractBaseModel, Company):
     def __str__(self):
         return self.business_name
 
+
 class PersonOfContact(AbstractBaseModel):
     company = models.ForeignKey('companies.TransporterCompany', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    email = models.EmailField()
-    phone = models.CharField(max_length=20)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=20, validators=[validate_international_phone_number], unique=True)
 
-    objects = models.Manager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
+    objects = PersonOfContactManager()
+    active_objects = PersonOfContactQuerySet.as_manager()
+
+    def __str__(self):
+        return self.phone
+    

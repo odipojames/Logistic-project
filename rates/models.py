@@ -1,6 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import HStoreField
-
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 
 from django.core.exceptions import ValidationError
@@ -25,10 +23,14 @@ class RatesManager(models.Manager):
             {"preferred_currency": preferred_currency, "created_by": created_by}, REQUIRED_ARGS)
 
         rates = self.model(price_per_kg=price_per_kg, price_per_km=price_per_km, price_per_truck=price_per_truck, preferred_currency=preferred_currency, created_by=created_by)
-
         rates.save()
         return rates
 
+class RatesQuerySet(ActiveObjectsQuerySet):
+    """ Queryset to be used by rates model"""
+    def get_rates(self, created_by=None):
+        """ returns all rates created by a specifi cargo owner"""
+        return self._active().filter(created_by=created_by)
 
 class Rate(AbstractBaseModel, models.Model):
     price_per_kg = models.DecimalField(decimal_places=4, max_digits=12, blank=True, default=Decimal(0))
@@ -39,7 +41,4 @@ class Rate(AbstractBaseModel, models.Model):
     created_by = models.ForeignKey('companies.CargoOwnerCompany', on_delete=models.CASCADE, related_name='rates')
 
     objects = RatesManager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
-
-
-
+    active_objects = RatesQuerySet.as_manager()

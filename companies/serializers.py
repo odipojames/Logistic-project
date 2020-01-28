@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from . models import *
+from companies.models import CargoOwnerCompany, TransporterCompany, PersonOfContact
 from authentication.models import User, UserManager
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
@@ -39,3 +39,14 @@ class TransporterSerializer(serializers.ModelSerializer):
         company = TransporterCompany.active_objects.create(
             company_director=user, **validated_data)
         return company
+
+class PersonofContactSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating points of contact
+    """
+    class Meta:
+        model = PersonOfContact
+        fields = ['id', 'company', 'name', 'email', 'phone']
+
+        def create(self, validated_data):
+            return PersonOfContact.objects.create_person_of_contact(**validated_data)
