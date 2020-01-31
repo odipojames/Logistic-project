@@ -23,7 +23,7 @@ class PersonOfContactManager(models.Manager):
 class PersonOfContactQuerySet(ActiveObjectsQuerySet):
     """Queryset to be used by PersonOfContact model"""
     def get_person_of_contact(self, company=None):
-        """returns person of contact a specific transporer"""
+        """returns person of contact a specific cargo owner"""
         return self._active().filter(company=company)
 
 class Company(models.Model):
@@ -92,7 +92,7 @@ class TransporterCompany(AbstractBaseModel, Company):
 
 
 class PersonOfContact(AbstractBaseModel):
-    company = models.ForeignKey('companies.TransporterCompany', on_delete=models.CASCADE)
+    company = models.ForeignKey('companies.CargoOwnerCompany', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, validators=[validate_international_phone_number], unique=True)

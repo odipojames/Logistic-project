@@ -100,3 +100,16 @@ class IsAdminOrCargoOwnerRates(permissions.BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return obj.created_by.company_director == request.user or str(request.user.role) == 'superuser'
+
+class IsCargoOwner(permissions.BasePermission):
+    """
+    allow only cargo owners and admin to perform spacific actions
+    """
+    message = 'you dont have an access to this action'
+
+    def has_permission(self, request, view):
+        return str(request.user.role) == "cargo-owner" or str(request.user.role) == "superuser"
+
+    def has_object_permission(self, request, view, obj):
+        """allow only owner or admin to delete and update depots"""
+        return obj.company.company_director == request.user or str(request.user.role) == 'superuser'

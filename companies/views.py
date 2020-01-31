@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
-from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner
+from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner
 from companies.models import TransporterCompany, PersonOfContact, CargoOwnerCompany, TransporterCompany
 from companies.serializers import TransporterSerializer, PersonofContactSerializer, CargoOwnerSerializer
 
@@ -223,7 +223,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
 class CreatePersonOfContact(generics.ListCreateAPIView):
     serializer_class = PersonofContactSerializer
-    permission_classes = (IsTransporterOrAdmin,)
+    permission_classes = (IsCargoOwner|IsShyperAdmin,)
 
     def get_queryset(self):
         """
@@ -231,14 +231,14 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        transporter = TransporterCompany.active_objects.get(
+        cargo_owner = CargoOwnerCompany.active_objects.get(
             company_director=user).pk
         if user.is_authenticated and str(user.role) == 'superuser':
             return PersonOfContact.objects.all()
-        return PersonOfContact.active_objects.get_person_of_contact(company=transporter)
+        return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     def create(self, request, *args, **kwargs):
-        company = TransporterCompany.active_objects.get(
+        company =  CargoOwnerCompany.active_objects.get(
             company_director=request.user).pk
         data = request.data.copy()
         data['company'] = company
@@ -263,7 +263,7 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
 
 class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PersonofContactSerializer
-    permission_classes = (IsTransporterOrAdmin,)
+    permission_classes = (IsCargoOwner|IsShyperAdmin,)
 
     def get_queryset(self):
         """
@@ -271,11 +271,11 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        transporter = TransporterCompany.active_objects.get(
+        cargo_owner =  CargoOwnerCompany.active_objects.get(
             company_director=user).pk
         if user.is_authenticated and str(user.role) == 'superuser':
             return PersonOfContact.objects.all()
-        return PersonOfContact.active_objects.get_person_of_contact(company=transporter)
+        return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     # getting a single person of contact
     def retrieve(self, request, pk):
