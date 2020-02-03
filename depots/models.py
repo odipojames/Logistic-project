@@ -41,6 +41,7 @@ class DepotQuerySet(ActiveObjectsQuerySet):
         """return public depots"""
         return self._active().filter(is_public=True)
 
+
 class Depot(AbstractBaseModel, models.Model):
     """
     This defines the data about a specific depot.
@@ -79,3 +80,9 @@ class Depot(AbstractBaseModel, models.Model):
         "longitude": self.coordinates.get("longitude")}
 
         return super().clean()
+
+    def is_viewable_by_user(self, user):
+        """
+        Check if current user can view depot
+        """
+        return self.user == user or self.is_public
