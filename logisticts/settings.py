@@ -56,9 +56,11 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
+    'corsheaders',
     ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -166,5 +168,7 @@ SWAGGER_SETTINGS = {
       }
    }
 }
+
+CORS_ORIGIN_WHITELIST = [os.getenv("CORS_ORIGIN_WHITELIST")]
 
 django_heroku.settings(locals())
