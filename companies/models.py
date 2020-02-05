@@ -28,14 +28,14 @@ class PersonOfContactQuerySet(ActiveObjectsQuerySet):
 
 class Company(models.Model):
     # business details
-    business_name = models.CharField(max_length=20)
+    business_name = models.CharField(max_length=20,unique=True)
     business_type = models.CharField(max_length=200, choices=[(
         'single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')])
-    account_number = models.CharField(max_length=50)
+    account_number = models.CharField(max_length=50,unique=True)
     prefered_currency = models.CharField(max_length=200)
     logo = models.ImageField(upload_to='documents/')
-    business_phone_no = models.CharField(max_length=20, validators=[validate_international_phone_number])
-    business_email = models.EmailField()
+    business_phone_no = models.CharField(max_length=20, validators=[validate_international_phone_number],unique=True)
+    business_email = models.EmailField(unique=True)
     postal_code = models.CharField(max_length=50, null=True)
     location = models.CharField(
         max_length=200, help_text='Street, City, Country')
@@ -50,6 +50,7 @@ class Company(models.Model):
     directors_id = models.FileField(
         upload_to="documents/", validators=[validate_file_extension])
 
+
     objects = models.Manager()
     class Meta:
         abstract = True
@@ -60,6 +61,7 @@ class CargoOwnerCompany(AbstractBaseModel, Company):  # inherits from company mo
     potential_monthly_tonnage = models.CharField(max_length=200)
     operational_hours = models.CharField(
         max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
+    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_cargo')
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
@@ -84,6 +86,7 @@ class TransporterCompany(AbstractBaseModel, Company):
         upload_to="documents/", validators=[validate_file_extension], null=True, blank=True)
     cross_boarder_operation = models.FileField(
         upload_to="documents/", validators=[validate_file_extension])
+    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_transporter')
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
@@ -102,4 +105,12 @@ class PersonOfContact(AbstractBaseModel):
 
     def __str__(self):
         return self.phone
-    
+
+
+class Shypper(AbstractBaseModel,Company) :
+    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_shypper')
+
+    active_objects = ActiveObjectsQuerySet.as_manager()
+
+    def str__(self):
+        return self.business_name
