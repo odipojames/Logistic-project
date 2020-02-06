@@ -101,6 +101,7 @@ class IsAdminOrCargoOwnerRates(permissions.BasePermission):
             return True
         return obj.created_by.company_director == request.user or str(request.user.role) == 'superuser'
 
+
 class IsCargoOwner(permissions.BasePermission):
     """
     Allow only cargo owners
@@ -111,4 +112,24 @@ class IsCargoOwner(permissions.BasePermission):
         return request.user.is_authenticated and str(request.user.role) == 'cargo-owner'
 
     def has_object_permission(self, request, view, obj):
+        """allow only owner or admin to delete and update depots"""
         return obj.owner == request.user or str(request.user.role) == 'superuser'
+
+
+class IsAdminOrAssetOwner(permissions.BasePermission):
+    """
+    check if shyper or asset owner
+    """
+    message = 'you must be an asset owner to perform this'
+
+    def has_permission(self, request, view):
+
+        return (
+            request.user.is_authenticated and
+            (str(request.user.role) == "transporter" or
+             str(request.user.role) == "superuser")
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return obj.owned_by.company_director == user or user.is_superuser
