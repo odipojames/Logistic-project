@@ -26,7 +26,8 @@ class PersonOfContactQuerySet(ActiveObjectsQuerySet):
         """returns person of contact a specific cargo owner"""
         return self._active().filter(company=company)
 
-class Company(models.Model):
+
+class BaseCompany(models.Model):
     # business details
     business_name = models.CharField(max_length=20,unique=True)
     business_type = models.CharField(max_length=200, choices=[(
@@ -54,14 +55,11 @@ class Company(models.Model):
     objects = models.Manager()
     class Meta:
         abstract = True
+        app_label = 'companies'
 
 
-class CargoOwnerCompany(AbstractBaseModel, Company):  # inherits from company model
-    # operations deatails
-    potential_monthly_tonnage = models.CharField(max_length=200)
-    operational_hours = models.CharField(
-        max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
-    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_cargo')
+class Company(BaseCompany,models.Model):
+    is_shypper = models.BooleanField(default=False)
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
@@ -70,7 +68,21 @@ class CargoOwnerCompany(AbstractBaseModel, Company):  # inherits from company mo
         return self.business_name
 
 
-class TransporterCompany(AbstractBaseModel, Company):
+class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
+    # operations deatails
+    potential_monthly_tonnage = models.CharField(max_length=200)
+    operational_hours = models.CharField(
+        max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
+    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
+    objects = models.Manager()
+    active_objects = ActiveObjectsQuerySet.as_manager()
+
+    def __str__(self):
+
+        return self.company.business_name
+
+
+class TransporterCompany(AbstractBaseModel):
     # operations deatails
     number_of_trucks = models.CharField(
         max_length=200, help_text='truck types + quantity')
@@ -86,12 +98,15 @@ class TransporterCompany(AbstractBaseModel, Company):
         upload_to="documents/", validators=[validate_file_extension], null=True, blank=True)
     cross_boarder_operation = models.FileField(
         upload_to="documents/", validators=[validate_file_extension])
-    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_transporter')
+    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
 
+    objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
 
     def __str__(self):
-        return self.business_name
+
+        return self.company.business_name
+
 
 
 class PersonOfContact(AbstractBaseModel):
@@ -107,10 +122,13 @@ class PersonOfContact(AbstractBaseModel):
         return self.phone
 
 
-class Shypper(AbstractBaseModel,Company) :
-    employees = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name='employer_shypper')
+class Shypper(AbstractBaseModel):
 
+    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
+
+    objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
 
     def str__(self):
-        return self.business_name
+
+        return self.company.business_name

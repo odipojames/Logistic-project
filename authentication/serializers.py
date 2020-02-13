@@ -148,7 +148,7 @@ class TransporterRegistrationSerializer(serializers.ModelSerializer):
     '''register transporter as a user'''
     full_name = serializers.CharField()
     phone = serializers.CharField()
-    role = serializers.CharField(default="transporter")
+    role = serializers.CharField(default="transporter-director")
     password = serializers.CharField(
         max_length=124, min_length=4, write_only=True,
         error_messages={
@@ -170,7 +170,7 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
     '''register cargo owner as a user'''
     full_name = serializers.CharField()
     phone = serializers.CharField()
-    role = serializers.CharField(default="cargo-owner")
+    role = serializers.CharField(default="cargo-owner-director")
     password = serializers.CharField(
         max_length=124, min_length=8, write_only=True,
         error_messages={

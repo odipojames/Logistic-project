@@ -14,6 +14,7 @@ from utils.renderers import JsnRenderer
 
 class DepotList(generics.ListCreateAPIView):
     """creating depots"""
+    permission_classes = [IsAuthenticated]
     permission_classes = (IsAdminOrCargoOwner,)
     serializer_class = DepotSerializer
     renderer_classes = (JsnRenderer,)

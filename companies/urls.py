@@ -1,15 +1,11 @@
 from django.urls import path
-from companies.views import (TransporterRegistrationAPIView, CargoOwnerRegistrationAPIView,
-                             CreatePersonOfContact, PersonOfContactRetrieveUpdateDestroyAPIView, CargoOwnerCompanyListAPIView, CargoOwnerCompanyRetrieveUpdateDestroy, TransporterCompanyListAPIView, TransporterCompanyRetrieveUpdateDestroy)
+from companies.views import (CargoOwnerCompanyListAPIView,
+                             CreatePersonOfContact, PersonOfContactRetrieveUpdateDestroyAPIView,  CargoOwnerCompanyRetrieveUpdateDestroy, TransporterCompanyListAPIView, TransporterCompanyRetrieveUpdateDestroy,
+                             EmployeeListCreateAPIView,
+                             EmployeeRetrieveUpdateDestroyAPIView,)
 
 urlpatterns = [
-    path('register/transporter/',
-         TransporterRegistrationAPIView.as_view(), name='transporter'),
-    path('register/cargo-owner/',
-         CargoOwnerRegistrationAPIView.as_view(), name='cargo-owner'),
-    path('cargo-owner/',
-         CargoOwnerCompanyListAPIView.as_view(),
-         name='cargo-owner-companies'),
+    path('cargo-owner/',CargoOwnerCompanyListAPIView.as_view(),name='cargo-companies'),
     path('cargo-owner/<int:pk>/',
          CargoOwnerCompanyRetrieveUpdateDestroy.as_view(),
          name='cargo-owner-company'),
@@ -23,4 +19,6 @@ urlpatterns = [
          name='register-person-of-contact'),
     path('person-of-contact/<int:pk>/',
          PersonOfContactRetrieveUpdateDestroyAPIView.as_view(), name='update-person-of-contact'),
+    path('employees/',EmployeeListCreateAPIView.as_view(),name='create-employee'),
+    path('employee/<int:pk>',EmployeeRetrieveUpdateDestroyAPIView.as_view(),name='detail-employee'),
 ]

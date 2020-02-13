@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from utils.permissions import IsAdminOrCargoOwner, IsAdminOrCargoOwnerRates
 from rates.models import Rate
 from rates.serializers import RateSerializer
-from companies.models import CargoOwnerCompany
+from companies.models import CargoOwnerCompany, Company
 
 class ListRates(generics.ListCreateAPIView):
     serializer_class = RateSerializer
@@ -13,7 +13,7 @@ class ListRates(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """
-        override queryset to return only objects that are not 
+        override queryset to return only objects that are not
         partially deleted to cargo owner and all to admin
         """
         user = self.request.user
@@ -21,7 +21,7 @@ class ListRates(generics.ListCreateAPIView):
         if user.is_authenticated and str(user.role) == 'superuser':
             return Rate.objects.all()
         return Rate.active_objects.get_rates(created_by=company)
-        
+
     def create(self, request, *args, **kwargs):
         created_by = CargoOwnerCompany.active_objects.get(company_director=request.user).pk
         data = request.data.copy()
@@ -51,15 +51,16 @@ class RetrieveUpdateDeleteRates(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         """
-        override queryset to return only objects that are partially deleted to 
+        override queryset to return only objects that are partially deleted to
         cargo owner and all to admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        company = Company.objects.get(company_director=user)
+        cargo_company = CargoOwnerCompany.active_objects.get(company=cargo_company)
         if user.is_authenticated and str(user.role) == 'superuser':
             return Rate.objects.all()
-        return Rate.active_objects.get_rates(created_by=company)
-    
+        return Rate.active_objects.get_rates(created_by=cargo_company)
+
     # get a single rate and serialize it
     def retrieve(self, request, pk):
         rates = self.get_object()

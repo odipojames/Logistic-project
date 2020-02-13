@@ -12,9 +12,9 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(self, full_name=None, email=None, password=None, phone=None, role=None, **kwargs):
-        REQUIRED_ARGS = ("full_name", "email", "password", "phone", "role")
+        REQUIRED_ARGS = ("full_name", "email", "password", "phone")
 
-        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone, "role": role}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone}, REQUIRED_ARGS)
 
         # Create role first. If a role already exists, we don't create it again.
         role = Role.active_objects.get_or_create(title=role)[0]
@@ -43,17 +43,17 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self, full_name=None, email=None, password=None, phone=None, role="superuser", **kwargs):
+            self, full_name=None, email=None, password=None, phone=None, role=None, **kwargs):
         '''
         This is the method that creates superusers in the database.
         '''
 
-        admin = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=True, is_staff=True, is_verified=True, is_active=True)
+        admin = self.create_user(full_name=full_name, email=email, password=password, role="superuser", phone=phone, is_superuser=True, is_staff=True, is_verified=True, is_active=True)
 
         return admin
 
     def create_transporter(
-            self, full_name=None, email=None, password=None, phone=None, role="transporter", **kwargs):
+            self, full_name=None, email=None, password=None, phone=None, role="transporter-director", **kwargs):
         '''
         This is the to create transporter company director/admin
         '''
@@ -63,7 +63,7 @@ class UserManager(BaseUserManager):
         return transporter
 
     def create_cargo_owner(
-            self, full_name=None, email=None, password=None, phone=None, role="cargo-owner", **kwargs):
+            self, full_name=None, email=None, password=None, phone=None, role="cargo-owner-director", **kwargs):
         '''
         This is the to create cargoOwner company director/admin
         '''
@@ -71,7 +71,7 @@ class UserManager(BaseUserManager):
         cargoOwner = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
 
         return cargoOwner
-    
+
     def create_driver(
             self, full_name=None, email=None, phone=None, is_verified=True, password=None, role="driver",  **kwargs):
         '''
@@ -96,8 +96,7 @@ class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
-    # TODO: should this be nullable and blank?
+    employer = models.ForeignKey("companies.Company", on_delete=models.CASCADE,related_name="employees", null=True, blank=True)
     role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="users", to_field="title")
     REQUIRED_FIELDS = ['full_name', "phone"]
     USERNAME_FIELD = 'email'
@@ -137,8 +136,8 @@ class Role(AbstractBaseModel, models.Model):
     """
     Contains the Role that each user must have.
     """
-
-    title = models.CharField(max_length=100, help_text="User's role within employer's organization.", unique=True)
+    role_choice = (("transporter-director","transporter-director"),("cargo-owner-director","cargo-owner-director"),("driver","driver"),("admin","admin"),("staff","staff"),("superuser","superuser"))
+    title = models.CharField(max_length=100,choices=role_choice, help_text="User's role within employer's organization.", unique=True)
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 

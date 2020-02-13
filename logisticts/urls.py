@@ -51,10 +51,11 @@ urlpatterns = [
          name='api_documentation'),
     path('api/v1/transporter/', include('transporter.urls')),
     path('api/v1/cargo_types/', include('cargo_types.urls')),
-    path('api/v1/depots/', include('depots.urls')), 
+    path('api/v1/depots/', include('depots.urls')),
     path('api/v1/assets/', include('assets.urls')),
     path('api/v1/rates/', include('rates.urls')),
     path('api/v1/order/', include('orders.urls')),
+
 ]
 
 

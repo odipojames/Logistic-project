@@ -9,69 +9,29 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
-# Create your views here.
-from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner
-from companies.models import TransporterCompany, PersonOfContact, CargoOwnerCompany, TransporterCompany
-from companies.serializers import TransporterSerializer, PersonofContactSerializer, CargoOwnerSerializer
+from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner, IsComponyAdminOrDirector
+from companies.models import TransporterCompany, PersonOfContact, CargoOwnerCompany, TransporterCompany, Company
+from companies.serializers import TransporterSerializer, PersonofContactSerializer, CargoOwnerSerializer, EmployeeSerializer
+from authentication.models import User, Role
+from django.core.mail import send_mail
+from logisticts.settings import EMAIL_HOST_USER
+from django.contrib.auth.base_user import BaseUserManager
+from django.forms.models import model_to_dict
 
 
-class TransporterRegistrationAPIView(APIView):
-    '''register transporter and its company once'''
-    permission_classes = (AllowAny,)
-    renderer_classes = (JsnRenderer, )
+class TransporterCompanyListAPIView(generics.ListCreateAPIView):
+    """register transporter and its company once"""
+    queryset = TransporterCompany.objects.all()
     serializer_class = TransporterSerializer
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        transporter = serializer.data
-
-        response = {
-            "transporter": dict(transporter),
-            "message": "Transporter registration request sent, wait for your account to be varified"
-
-        }
-
-        return Response(response, status=status.HTTP_201_CREATED)
-
-
-class CargoOwnerRegistrationAPIView(APIView):
-    '''register cargo owner and its company once'''
-    permission_classes = (AllowAny,)
     renderer_classes = (JsnRenderer, )
-    serializer_class = CargoOwnerSerializer
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        cargoOwner = serializer.data
-
-        response = {
-            "transporter": dict(cargoOwner),
-            "message": "cargo owner registration request sent, wait for your account to be varified"
-
-        }
-
-        return Response(response, status=status.HTTP_201_CREATED)
-
-
-class CargoOwnerCompanyListAPIView(ListAPIView):
-    """ List all cargo owner companies """
-    queryset = CargoOwnerCompany.objects.all()
-    serializer_class = CargoOwnerSerializer
-    renderer_classes = (JsnRenderer, )
-    permission_classes = (IsShyperAdmin, )
 
     def list(self, request):
+        permission_classes = (IsShyperAdmin, )
         queryset = self.get_queryset()
-        serialize_companies = self.serializer_class(
+        serialize = self.serializer_class(
             queryset, many=True)
 
-        companies = serialize_companies.data
+        companies = serialize.data
         if len(companies) > 0:
             response = {
                 "Message": "Companies Retrieved Successfully",
@@ -82,19 +42,19 @@ class CargoOwnerCompanyListAPIView(ListAPIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-class TransporterCompanyListAPIView(ListAPIView):
-    """ List all transporting companies """
-    queryset = TransporterCompany.objects.all()
-    serializer_class = TransporterSerializer
+class CargoOwnerCompanyListAPIView(generics.ListCreateAPIView):
+    """register cargo owner and its company once"""
+    queryset = CargoOwnerCompany.objects.all()
+    serializer_class = CargoOwnerSerializer
     renderer_classes = (JsnRenderer, )
-    permission_classes = (IsShyperAdmin, )
 
     def list(self, request):
+        permission_classes = (IsShyperAdmin, )
         queryset = self.get_queryset()
-        serialize = self.serializer_class(
+        serialize_companies = self.serializer_class(
             queryset, many=True)
 
-        companies = serialize.data
+        companies = serialize_companies.data
         if len(companies) > 0:
             response = {
                 "Message": "Companies Retrieved Successfully",
@@ -115,9 +75,7 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAdminOrCompanyOwner, )
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == "superuser":
-            return CargoOwnerCompany.objects.all()
+
         return CargoOwnerCompany.active_objects.all_objects()
 
     def retrieve(self, request, pk):
@@ -170,11 +128,12 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     """
     serializer_class = TransporterSerializer
     renderer_classes = (JsnRenderer, )
+    permission_classes = [IsAuthenticated]
     permission_classes = (IsAdminOrCompanyOwner, )
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == "superuser":
+        if user.is_authenticated and str(user.role) == "superuser":
             return TransporterCompany.objects.all()
         return TransporterCompany.active_objects.all_objects()
 
@@ -223,7 +182,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
 class CreatePersonOfContact(generics.ListCreateAPIView):
     serializer_class = PersonofContactSerializer
-    permission_classes = (IsCargoOwner|IsShyperAdmin,)
+    permission_classes = (IsCargoOwner | IsShyperAdmin, IsAuthenticated)
 
     def get_queryset(self):
         """
@@ -238,7 +197,7 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     def create(self, request, *args, **kwargs):
-        company =  CargoOwnerCompany.active_objects.get(
+        company = CargoOwnerCompany.active_objects.get(
             company_director=request.user).pk
         data = request.data.copy()
         data['company'] = company
@@ -263,7 +222,13 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
 
 class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PersonofContactSerializer
-    permission_classes = (IsCargoOwner|IsShyperAdmin,)
+    permission_classes = (IsCargoOwner | IsShyperAdmin, IsAuthenticated)
+
+    def get_parsers(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return []
+
+        return super().get_parsers()
 
     def get_queryset(self):
         """
@@ -271,8 +236,8 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        cargo_owner =  CargoOwnerCompany.active_objects.get(
-            company_director=user).pk
+        company = Company.active_objects.get(company_director=user)
+        cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
         if user.is_authenticated and str(user.role) == 'superuser':
             return PersonOfContact.objects.all()
         return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
@@ -310,3 +275,111 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
         response = {
             "Message": "Person of contact has been successfully deleted"}
         return Response(response, status=status.HTTP_200_OK)
+
+
+class EmployeeListCreateAPIView(generics.ListCreateAPIView):
+    """create company employer"""
+    serializer_class = EmployeeSerializer
+    renderer_classes = (JsnRenderer, )
+    permission_classes = (IsAuthenticated, IsComponyAdminOrDirector)
+
+    def get_queryset(self):
+        user = self.request.user
+        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+            company = Company.objects.get(company_director=user)
+            return company.employees.filter(is_deleted=False)
+        if str(user.role)=='admin':
+            company = user.employer
+            return company.employees.filter(is_deleted=False)
+
+        if str(user.role) == 'superuser':
+            for c in Company.objects.all():
+                return c.employees.all()
+
+    def post(self, request, format=None):
+        user = self.request.user
+        if str(user.role) =="admin":
+            company = user.employer
+        else:
+            company = Company.objects.get(company_director=user)
+        data = request.data.copy()
+        data['employer'] = company.pk
+        password = BaseUserManager().make_random_password(
+            10)  # generate random password for the user
+        data['password'] = password
+        email = data['email']
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        subject = f"{company} new employee"
+        message = f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}"
+        from_email = EMAIL_HOST_USER
+        recipient_list = [email]
+
+        # sends authentication credentials to employee's email
+        send_mail(subject, message, from_email,
+                  recipient_list, fail_silently=False)
+        response = {
+            "message": "employee added succesfully",
+            "employee": serializer.data
+
+        }
+        return Response(response, status.HTTP_201_CREATED)
+
+
+class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """singl employes retrival updates and destroy"""
+    serializer_class = EmployeeSerializer
+    renderer_classes = (JsnRenderer, )
+    permission_classes = (IsAuthenticated, IsComponyAdminOrDirector)
+
+    def get_queryset(self):
+        user = self.request.user
+        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+            company = Company.objects.get(company_director=user)
+            return company.employees.filter(is_deleted=False)
+
+        if str(user.role)=='admin':
+            company = user.employer
+            return company.employees.filter(is_deleted=False)
+
+        if str(user.role) == 'superuser':
+            for c in Company.objects.all():
+                return c.employees.all()
+
+
+    def retrieve(self, request, pk):
+        employee = self.get_object()
+        serializer = self.serializer_class(employee,)
+        response = {
+            "message": "employee succesfully retrieved ",
+            "employee": serializer.data
+        }
+        return Response(response, status.HTTP_200_OK)
+
+    def update(self, request, **kwargs):
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        kwargs['partial'] = True
+        data = request.data
+        data.pop('employer',None)
+        data.pop('password',None)
+        data.pop('role',None)  # TODO: update role
+        #role_instance = Role.active_objects.get_or_create(title=role)[0]
+        #data['role'] = role_instance
+        serializer = self.serializer_class(
+            obj, data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response = {
+            "message": "employee data succesfully updated",
+            "employee": serializer.data
+
+        }
+        return Response(response, status.HTTP_200_OK)
+
+    def destroy(self, request, pk):
+        obj = self.get_object()
+        obj.is_active = False
+        obj.soft_delete(commit=True)
+        return Response(status.HTTP_204_NO_CONTENT)

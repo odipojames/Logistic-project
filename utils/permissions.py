@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from companies.models import TransporterCompany, CargoOwnerCompany
+from companies.models import TransporterCompany, CargoOwnerCompany, Company
 from rest_framework.permissions import SAFE_METHODS
 
 
@@ -23,7 +23,7 @@ class IsAllowedToOrder(permissions.BasePermission):
     message = 'you must be a cargo Owner to permform this'
 
     def has_permission(self, request, view):
-        return request.user.role == "carogo-owner"
+        return request.user.role == "carogo-owner-director"
 
 
 class IsTransporterOrAdmin(permissions.BasePermission):
@@ -33,7 +33,7 @@ class IsTransporterOrAdmin(permissions.BasePermission):
     message = 'you must be a transporter or superuser to perform this'
 
     def has_permission(self, request, view):
-        return str(request.user.role) == "transporter" or str(request.user.role) == "superuser"
+        return str(request.user.role) == "transporter-director" or str(request.user.role) == "superuser"
 
 
 class IsAdminOrCargoOwner(permissions.BasePermission):
@@ -46,7 +46,7 @@ class IsAdminOrCargoOwner(permissions.BasePermission):
         if request.method in SAFE_METHODS:
             return True
         else:
-            return str(request.user.role) == "cargo-owner" or str(request.user.role) == "superuser"
+            return str(request.user.role) == "cargo-owner-director" or str(request.user.role) == "superuser"
 
     def has_object_permission(self, request, view, obj):
         """allow only owner or admin to delete and uptade depots"""
@@ -72,8 +72,8 @@ class IsAdminOrCompanyOwner(permissions.BasePermission):
 
         return (
             request.user.is_authenticated and (
-                str(request.user.role) == "cargo-owner" or
-                str(request.user.role) == "transporter" or
+                str(request.user.role) == "cargo-owner-director" or
+                str(request.user.role) == "transporter-director" or
                 str(request.user.role) == "superuser")
         )
 
@@ -93,7 +93,7 @@ class IsAdminOrCargoOwnerRates(permissions.BasePermission):
         if request.method in SAFE_METHODS:
             return True
         else:
-            return str(request.user.role) == "cargo-owner" or str(request.user.role) == "superuser"
+            return str(request.user.role) == "cargo-owner-director" or str(request.user.role) == "superuser"
 
     def has_object_permission(self, request, view, obj):
         """allow only owner or admin to delete and uptade depots"""
@@ -109,7 +109,7 @@ class IsCargoOwner(permissions.BasePermission):
     message = "You must be a cargo owner or admin"
 
     def has_permission(self, request, view):
-        return request.user.is_authenticated and str(request.user.role) == 'cargo-owner'
+        return request.user.is_authenticated and str(request.user.role) == 'cargo-owner-director'
 
     def has_object_permission(self, request, view, obj):
         """allow only owner or admin to delete and update depots"""
@@ -126,10 +126,26 @@ class IsAdminOrAssetOwner(permissions.BasePermission):
 
         return (
             request.user.is_authenticated and
-            (str(request.user.role) == "transporter" or
+            (str(request.user.role) == "transporter-director" or
              str(request.user.role) == "superuser")
         )
 
     def has_object_permission(self, request, view, obj):
         user = request.user
         return obj.owned_by.company_director == user or user.is_superuser
+
+
+class IsComponyAdminOrDirector(permissions.BasePermission):
+    message = "you must be admin or director to perfom this"
+
+    def has_permission(self, request, view):
+        user = request.user
+        return (str(user.role) == "transporter-director" or str(user.role) == "cargo-owner-director" or str(user.role) == "admin" or str(user.role) == "superuser")
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if(str(user.role) == "transporter-director" or str(user.role) == "cargo-owner-director"):
+            company = Company.objects.get(company_director=user)
+        else:
+            company = user.employer
+        return obj.employer == company or user.is_superuser

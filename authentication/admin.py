@@ -14,8 +14,8 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('full_name', 'email', 'phone','is_verified', 'is_active', 'is_staff', 'role')
-    
+        fields = ('full_name', 'email', 'phone','is_verified', 'is_active', 'is_staff', 'role', 'employer')
+
     def clean_password2(self):
         # Ensure that the two password entries match
         password1 = self.cleaned_data.get("password2")
@@ -31,7 +31,7 @@ class UserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
-    
+
 class UserChangeForm(forms.ModelForm):
     """A form for updating users. Includes all the field on the user,
     but replaces the password field with admin's password has display field.
@@ -41,14 +41,14 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('full_name', 'email', 'phone', 'password','is_verified', 'is_active', 'is_staff', 'role')
+        fields = ('full_name', 'email', 'phone', 'password','is_verified', 'is_active', 'is_staff', 'role', 'employer')
 
     def clean_password(self):
         # Regardless of what the user provides, return the initial value.
         # This is done here, rather on the field, because the
         # field does not have access to the initial value
         return self.initial["password"]
-    
+
 class UserAdmin(BaseUserAdmin):
     # The forms to add and change user instances
     form = UserChangeForm
@@ -62,13 +62,13 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ('full_name', 'password')}),
         ('Contact info', {'fields' : ('phone', 'email')}),
-        ('Other info', {'fields' : ('role',)}),
+        ('Other info', {'fields' : ('role','employer')}),
         ('Permissions', {'fields' : ('is_staff', 'is_active', 'is_verified', 'is_superuser')})
     )
     add_fieldsets = (
         (None, {
             'classes' : ('wide',),
-            'fields' : ('email', 'full_name', 'phone', 'role','is_active', 'is_staff', 'is_superuser', 'is_verified','password1', 'password2')}
+            'fields' : ('email', 'full_name', 'phone', 'employer', 'role','is_active', 'is_staff', 'is_superuser', 'is_verified','password1', 'password2', )}
         ),
     )
     search_fields = ('email',)

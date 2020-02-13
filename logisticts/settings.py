@@ -11,6 +11,7 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 import django_heroku
+import datetime
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS")]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS")
 
 
 # Application definition
@@ -77,6 +78,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     )
+}
+#set token expiry
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(seconds=1800),
+    'JWT_ALLOW_REFRESH': True,
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
 }
 
 ROOT_URLCONF = 'logisticts.urls'
@@ -169,6 +176,6 @@ SWAGGER_SETTINGS = {
    }
 }
 
-CORS_ORIGIN_WHITELIST = [os.getenv("CORS_ORIGIN_WHITELIST")]
+CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST").split(',')
 
 django_heroku.settings(locals())
