@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
     'corsheaders',
+    'django_rest_passwordreset',
     ]
 
 MIDDLEWARE = [
@@ -165,6 +166,9 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
+
+site_url = os.getenv("SITE_URL")
+site_full_name = os.getenv("SITE_FULL_NAME")
 
 SWAGGER_SETTINGS = {
    'SECURITY_DEFINITIONS': {

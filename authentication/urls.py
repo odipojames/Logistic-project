@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path,include
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from authentication.views import RegistrationAPIView, LoginAPIView, UserUpdateAPIView, logout_view
@@ -9,4 +9,5 @@ urlpatterns = [
     path("user_update/", UserUpdateAPIView.as_view(), name="user_update"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh_token"),
     path("logout/", logout_view, name="logout"),
+    path('reset-password/', include('django_rest_passwordreset.urls', namespace='password_reset')),
 ]

@@ -186,3 +186,8 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         return User.objects.create_cargo_owner(**validated_data)
+
+
+class CustomTokenSerializer(serializers.Serializer):
+    """custome tokenVerification"""
+    token = serializers.CharField()

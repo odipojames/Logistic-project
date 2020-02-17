@@ -5,8 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
-
 from authentication.serializers import LoginSerializer, RegistrationSerializer, UserUpdateSerializer
 from utils.renderers import JsnRenderer
 
@@ -79,10 +77,11 @@ def logout_view(request):
         refresh_token_instance = RefreshToken(refresh_token)
         refresh_token_instance.blacklist()
 
-        next_url = request.query_params.get("next") if request.query_params.get("next") else ""
+        next_url = request.query_params.get(
+            "next") if request.query_params.get("next") else ""
 
         response = {
-            "data": {"message": "You have been succesfully logged out","next_url": next_url,}
+            "data": {"message": "You have been succesfully logged out", "next_url": next_url, }
         }
 
         return Response(response, status=status.HTTP_200_OK)
