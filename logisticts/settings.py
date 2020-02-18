@@ -182,4 +182,6 @@ SWAGGER_SETTINGS = {
 
 CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST").split(',')
 
+CORS_ORIGIN_REGEX_WHITELIST = os.getenv("CORS_ORIGIN_REGEX_WHITELIST")
+
 django_heroku.settings(locals())
