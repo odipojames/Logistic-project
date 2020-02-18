@@ -73,12 +73,12 @@ class UserManager(BaseUserManager):
         return cargoOwner
 
     def create_driver(
-            self, full_name=None, email=None, phone=None, is_verified=True, password=None, role="driver",  **kwargs):
+            self, full_name=None, email=None, phone=None, is_verified=True, password=None, role=None,  **kwargs):
         '''
         This is the to create the driver
         '''
 
-        driver = self.create_user(full_name=full_name, email=email, is_verified=is_verified,role=role, password=password, phone=phone, is_superuser=False, is_active=True)
+        driver = self.create_user(full_name=full_name, email=email, is_verified=is_verified,role="driver", password=password, phone=phone, is_superuser=False, is_active=True)
 
         driver.is_verified = True
         return driver

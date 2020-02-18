@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from authentication.serializers import TransporterRegistrationSerializer, CargoOwnerRegistrationSerializer
 from django.contrib.auth.base_user import BaseUserManager
+from utils.validators import validate_international_phone_number
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -120,12 +121,11 @@ class RoleSerializer(serializers.ModelSerializer):
 
 class EmployeeSerializer(serializers.ModelSerializer):
     """serializer for creating employees"""
-    role_choice = (("transporter-director", "transporter-director"), ("cargo-owner-director",
-                                                                      "cargo-owner-director"), ("driver", "driver"), ("admin", "admin"), ("staff", "staff"))
+    role_choice = (("admin", "admin"), ("staff", "staff"))
     role = serializers.ChoiceField(choices=role_choice, default='staff')
     is_verified = serializers.BooleanField(default=True)
     full_name = serializers.CharField()
-    phone = serializers.CharField()
+    phone = serializers.CharField(validators=[validate_international_phone_number])
     password = serializers.CharField(
         max_length=124, min_length=4, write_only=True,
         error_messages={
@@ -142,6 +142,18 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'password': {'read_only': True},
             'is_verified': {'read_only': True},
         }
+
+    def validate(self, data):
+        if not validate_international_phone_number(data.get('phone')):
+            raise serializers.ValidationError({'phone': 'Please enter a valid international phone number'})
+        validated_data = super().validate(data)
+
+        role = data.get('role', None)
+
+        if role:
+            role_instance = Role.active_objects.get_or_create(title=role)[0]
+            validated_data['role'] = role_instance
+        return validated_data
 
     def create(self, validated_data):
         employee = User.objects.create_user(**validated_data)

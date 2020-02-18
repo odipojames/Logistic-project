@@ -135,12 +135,17 @@ class IsAdminOrAssetOwner(permissions.BasePermission):
         return obj.owned_by.company_director == user or user.is_superuser
 
 
-class IsComponyAdminOrDirector(permissions.BasePermission):
+class IsComponyAdminOrDirectorOrStaffReadOnly(permissions.BasePermission):
+    """
+    Directors and admins have full access. Staff users have read-only access.
+    """
     message = "you must be admin or director to perfom this"
 
     def has_permission(self, request, view):
         user = request.user
-        return (str(user.role) == "transporter-director" or str(user.role) == "cargo-owner-director" or str(user.role) == "admin" or str(user.role) == "superuser")
+        if str(user.role) == 'staff' and request.method in SAFE_METHODS:
+            return True
+        return (str(user.role) == "transporter-director" or str(user.role) == "cargo-owner-director" or str(user.role) == "admin" or user.is_superuser)
 
     def has_object_permission(self, request, view, obj):
         user = request.user

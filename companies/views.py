@@ -9,14 +9,14 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner, IsComponyAdminOrDirector
+from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner, IsComponyAdminOrDirectorOrStaffReadOnly
 from companies.models import TransporterCompany, PersonOfContact, CargoOwnerCompany, TransporterCompany, Company
 from companies.serializers import TransporterSerializer, PersonofContactSerializer, CargoOwnerSerializer, EmployeeSerializer
 from authentication.models import User, Role
 from django.core.mail import send_mail
 from logisticts.settings import EMAIL_HOST_USER
 from django.contrib.auth.base_user import BaseUserManager
-from django.forms.models import model_to_dict
+from drf_yasg.utils import swagger_auto_schema
 
 
 class TransporterCompanyListAPIView(generics.ListCreateAPIView):
@@ -281,14 +281,15 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
     """create company employer"""
     serializer_class = EmployeeSerializer
     renderer_classes = (JsnRenderer, )
-    permission_classes = (IsAuthenticated, IsComponyAdminOrDirector)
+    permission_classes = (
+        IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
         user = self.request.user
         if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
             company = Company.objects.get(company_director=user)
             return company.employees.filter(is_deleted=False)
-        if str(user.role)=='admin':
+        if str(user.role) == 'admin' or str(user.role) == 'staff':
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
@@ -298,7 +299,7 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
 
     def post(self, request, format=None):
         user = self.request.user
-        if str(user.role) =="admin":
+        if str(user.role) == "admin":
             company = user.employer
         else:
             company = Company.objects.get(company_director=user)
@@ -331,7 +332,8 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
     """singl employes retrival updates and destroy"""
     serializer_class = EmployeeSerializer
     renderer_classes = (JsnRenderer, )
-    permission_classes = (IsAuthenticated, IsComponyAdminOrDirector)
+    permission_classes = (
+        IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
         user = self.request.user
@@ -339,14 +341,13 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
             company = Company.objects.get(company_director=user)
             return company.employees.filter(is_deleted=False)
 
-        if str(user.role)=='admin':
+        if str(user.role) == 'admin' or str(user.role) == 'staff':
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
         if str(user.role) == 'superuser':
             for c in Company.objects.all():
                 return c.employees.all()
-
 
     def retrieve(self, request, pk):
         employee = self.get_object()
@@ -357,20 +358,30 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
         }
         return Response(response, status.HTTP_200_OK)
 
+    @swagger_auto_schema(auto_schema=None)
     def update(self, request, **kwargs):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         kwargs['partial'] = True
         data = request.data
-        data.pop('employer',None)
-        data.pop('password',None)
-        data.pop('role',None)  # TODO: update role
-        #role_instance = Role.active_objects.get_or_create(title=role)[0]
-        #data['role'] = role_instance
+        data.pop('employer', None)
+        data.pop('password', None)
         serializer = self.serializer_class(
             obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        self.perform_update(serializer)
+        # suspending employee
+        suspend = data.get('suspend')
+        if suspend:
+            if suspend.lower() == 'true':
+                obj.is_active = False
+                send_mail(subject="Shyper Account suspension", message="your account has been suspended", from_email=EMAIL_HOST_USER,
+                          recipient_list=[obj.email], fail_silently=False)
+            if suspend.lower() == 'false':
+                obj.is_active = True
+                send_mail(subject="Shyper Account reactivation", message="your account suspension has been uplifted", from_email=EMAIL_HOST_USER,
+                          recipient_list=[obj.email], fail_silently=False)
+            obj.save()
         response = {
             "message": "employee data succesfully updated",
             "employee": serializer.data
