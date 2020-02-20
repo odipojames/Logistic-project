@@ -170,6 +170,11 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
 site_url = os.getenv("SITE_URL")
 site_full_name = os.getenv("SITE_FULL_NAME")
 
+#sms keys
+AF_USERNAME = os.getenv("AF_USERNAME")
+APIKEY = os.getenv("AF_API")
+
+
 SWAGGER_SETTINGS = {
    'SECURITY_DEFINITIONS': {
       'Bearer': {

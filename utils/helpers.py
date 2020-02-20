@@ -1,10 +1,12 @@
-import random 
+import random
 import string
 import csv
 import io
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+import  africastalking
+from logisticts.settings import  AF_USERNAME, APIKEY
 
 def enforce_all_required_arguments_are_truthy(kwargs, required_args):
     """
@@ -74,7 +76,7 @@ def blacklist_user_outstanding_tokens(user_instance):
 
 def random_password(self, N=10):
         random_password = ''.join(random.choices(string.ascii_lowercase +
-                                            string.digits, k=N)) 
+                                            string.digits, k=N))
         return random_password
 
 def read_csv(csv_file):
@@ -85,3 +87,15 @@ def read_csv(csv_file):
     io_string = io.StringIO(data_set)
     next(io_string) #jump header line
     return csv.reader(io_string, delimiter=',')
+
+
+# Initialize SDK for sending sms
+username = AF_USERNAME
+api_key = APIKEY
+africastalking.initialize(username, api_key)
+
+def send_sms(message,recipients):
+    """send sms notifications"""
+    sms = africastalking.SMS
+    sender = 'softsearch'
+    return sms.send(message, recipients, sender)

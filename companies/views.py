@@ -17,6 +17,7 @@ from django.core.mail import send_mail
 from logisticts.settings import EMAIL_HOST_USER
 from django.contrib.auth.base_user import BaseUserManager
 from drf_yasg.utils import swagger_auto_schema
+from utils.helpers import send_sms
 
 
 class TransporterCompanyListAPIView(generics.ListCreateAPIView):
@@ -309,6 +310,7 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
             10)  # generate random password for the user
         data['password'] = password
         email = data['email']
+        phone = data['phone']
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -320,6 +322,8 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
         # sends authentication credentials to employee's email
         send_mail(subject, message, from_email,
                   recipient_list, fail_silently=False)
+        #sms notifications
+        send_sms(message=f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}",recipients=[phone])
         response = {
             "message": "employee added succesfully",
             "employee": serializer.data
@@ -377,10 +381,12 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
                 obj.is_active = False
                 send_mail(subject="Shyper Account suspension", message="your account has been suspended", from_email=EMAIL_HOST_USER,
                           recipient_list=[obj.email], fail_silently=False)
+                send_sms(message="your shypper account has been suspended",recipients=[obj.phone])
             if suspend.lower() == 'false':
                 obj.is_active = True
                 send_mail(subject="Shyper Account reactivation", message="your account suspension has been uplifted", from_email=EMAIL_HOST_USER,
                           recipient_list=[obj.email], fail_silently=False)
+                send_sms(message="your shypper account has been reactivated",recipients=[obj.phone])
             obj.save()
         response = {
             "message": "employee data succesfully updated",
