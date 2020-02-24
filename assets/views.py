@@ -4,9 +4,11 @@ from rest_framework.response import Response
 
 from .serializers import TrucksCsvSerializer, TrailersCsvSerializer, TruckSerializer, TrailerSerializer
 from .models import Truck, Trailer
-from companies.models import TransporterCompany
+from companies.models import TransporterCompany, Company
 from utils.renderers import JsnRenderer
 from utils.permissions import IsTransporterOrAdmin, IsAdminOrAssetOwner
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 
 class TruckCsvUploadView(generics.CreateAPIView):
@@ -34,24 +36,37 @@ class TrailerCsvUploadView(generics.CreateAPIView):
 
 
 class TruckListCreateAPIView(generics.ListCreateAPIView):
-    ''' Transporter or admin can create trucks'''
+    """ Transporter or admin can create trucks"""
     serializer_class = TruckSerializer
     renderer_classes = (JsnRenderer, )
-    permission_classes = (IsTransporterOrAdmin,)
+    permission_classes = (IsAuthenticated, IsTransporterOrAdmin,)
 
     def get_queryset(self):
+
         user = self.request.user
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+            transporter = TransporterCompany.active_objects.get(
+                company=company).pk
+            return Truck.active_objects.filter(owned_by=transporter)
 
-        transporter = TransporterCompany.active_objects.get(
-            company_director=user).pk
+        if str(user.role) == "admin" or str(user.role) == "staff":
+            company = user.employer
+            transporter = TransporterCompany.active_objects.get(
+                company=company).pk
+            return Truck.active_objects.filter(owned_by=transporter)
 
-        if user.role == "superuser":
+        if user.is_superuser:
             return Truck.objects.all()
-        return Truck.active_objects.get_personal_assets(owned_by=transporter)
 
     def create(self, request):
+        user = self.request.user
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+        if str(user.role) == "admin":
+            company = user.employer
         owned_by = TransporterCompany.active_objects.get(
-            company_director=request.user).pk
+            company=company).pk
 
         data = request.data.copy()
         data['owned_by'] = owned_by
@@ -87,22 +102,30 @@ class TruckListCreateAPIView(generics.ListCreateAPIView):
 class TruckRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TruckSerializer
     renderer_classes = (JsnRenderer, )
-    permission_classes = (IsAdminOrAssetOwner,)
+    permission_classes = (IsAuthenticated, IsAdminOrAssetOwner,)
 
     def get_queryset(self):
         user = self.request.user
 
-        transporter = TransporterCompany.active_objects.get(
-            company_director=user).pk
+        user = self.request.user
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+            transporter = TransporterCompany.active_objects.get(
+                company=company).pk
+            return Truck.active_objects.filter(owned_by=transporter)
 
-        if user.role == "superuser":
+        if str(user.role) == "admin" or str(user.role) == "staff":
+            company = user.employer
+            transporter = TransporterCompany.active_objects.get(
+                company=company).pk
+            return Truck.active_objects.filter(owned_by=transporter)
+
+        if user.is_superuser:
             return Truck.objects.all()
-        return Truck.active_objects.get_personal_assets(owned_by=transporter)
 
     def retrieve(self, request, pk):
         truck = self.get_object()
-        self.check_object_permissions(request, truck)
-        serialize = self.serializer_class(truck)
+        serialize = self.serializer_class(truck,)
         respose = {
             "Message": "Truck Successfully Retrieved",
             "Truck": serialize.data
@@ -110,15 +133,16 @@ class TruckRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 
         return Response(respose, status=status.HTTP_200_OK)
 
-    def update(self, request, pk):
+    def update(self, request, **kwargs):
         """ Amend Truck """
-        truck = self.get_object()
-        self.check_object_permissions(request, truck)
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        kwargs['partial'] = True
         data = request.data.copy()
         data.pop("is_deleted", None)
         data.pop("owned_by", None)
         serializer = self.serializer_class(
-            truck, data=data, partial=True)
+            obj, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -149,13 +173,16 @@ class TrailerListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+        if str(user.role) == "admin" or str(user.role) == "staff":
+            company = user.employer
         transporter = TransporterCompany.active_objects.get(
-            company_director=user).pk
+            company=company).pk
 
         if user.role == "superuser":
             return Trailer.objects.all()
-        return Trailer.active_objects.get_personal_assets(owned_by=transporter)
+        return Trailer.active_objects.get(owned_by=transporter)
 
     def create(self, request):
         owned_by = TransporterCompany.active_objects.get(
@@ -199,13 +226,16 @@ class TrailerRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
     def get_queryset(self):
         user = self.request.user
-
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+        if str(user.role) == "admin" or str(user.role) == "staff":
+            company = user.employer
         transporter = TransporterCompany.active_objects.get(
-            company_director=user).pk
+            company=company).pk
 
         if user.role == "superuser":
             return Trailer.objects.all()
-        return Trailer.active_objects.get_personal_assets(owned_by=transporter)
+        return Trailer.active_objects.get(owned_by=transporter)
 
     def retrieve(self, request, pk):
         trailer = self.get_object()

@@ -33,7 +33,9 @@ class IsTransporterOrAdmin(permissions.BasePermission):
     message = 'you must be a transporter or superuser to perform this'
 
     def has_permission(self, request, view):
-        return str(request.user.role) == "transporter-director" or str(request.user.role) == "superuser"
+        if str(request.user.role) == "staff" and request.method in SAFE_METHODS:
+            return True
+        return str(request.user.role) == "transporter-director" or str(request.user.role) == "superuser" or str(request.user.role) == "admin"
 
 
 class IsAdminOrCargoOwner(permissions.BasePermission):
@@ -124,15 +126,26 @@ class IsAdminOrAssetOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
+        if str(request.user.role) == 'staff' and request.method in SAFE_METHODS:
+            return True
+
         return (
             request.user.is_authenticated and
             (str(request.user.role) == "transporter-director" or
-             str(request.user.role) == "superuser")
+             str(request.user.role) == "superuser" or str(request.user.role) == "admin")
         )
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        return obj.owned_by.company_director == user or user.is_superuser
+        if str(user.role) == "transporter-director":
+            company = Company.objects.get(company_director=user)
+            transporter = TransporterCompany.objects.get(company=company)
+            
+        if str(user.role) == "admin" or str(user.role) == "staff":
+            company = user.employer
+            transporter = TransporterCompany.objects.get(company=company)
+
+        return obj.owned_by == transporter or user.is_superuser
 
 
 class IsComponyAdminOrDirectorOrStaffReadOnly(permissions.BasePermission):
