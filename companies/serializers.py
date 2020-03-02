@@ -31,7 +31,7 @@ class CompanyTSerializer(serializers.ModelSerializer):
 class CargoOwnerSerializer(serializers.ModelSerializer):
     '''create cargo owner company and its owner once'''
 
-    company = CompanySerializer()
+    company = CompanySerializer(read_only=False)
 
     class Meta:
         model = CargoOwnerCompany
@@ -49,15 +49,14 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
         return cargo_company
 
     def update(self, instance, validated_data):
-        company_director_data = validated_data['company'].pop(
-            'company_director')
-
-        if company_director_data:
-            company_director = instance.company_director
+        company_data = validated_data.pop("company", None)
+        if company_data:
+            company_data.pop('company_director',None)  # remove director
+            company = instance.company
             serializer = CargoOwnerRegistrationSerializer(
-                data=company_director_data, partial=True)
+                data=company_data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.update(company_director, company_director_data)
+            serializer.update(company, company_data)
 
         return super().update(instance, validated_data)
 
@@ -65,7 +64,7 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
 class TransporterSerializer(serializers.ModelSerializer):
     '''create transport company and its admin who is the dirctor in this case'''
 
-    company = CompanyTSerializer()
+    company = CompanyTSerializer(read_only=False)
 
     class Meta:
         model = TransporterCompany
@@ -84,15 +83,14 @@ class TransporterSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
-        company_director_data = validated_data['company'].pop(
-            'company_director')
-
-        if company_director_data:
-            company_director = instance.company_director
+        company_data = validated_data.pop('company', None)
+        if company_data:
+            company_data.pop('company_director',None)
+            company = instance.company
             serializer = TransporterRegistrationSerializer(
-                data=company_director_data, partial=True)
+                data=company_data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.update(company_director, company_director_data)
+            serializer.update(company, company_data)
 
         return super().update(instance, validated_data)
 
@@ -125,7 +123,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(choices=role_choice, default='staff')
     is_verified = serializers.BooleanField(default=True)
     full_name = serializers.CharField()
-    phone = serializers.CharField(validators=[validate_international_phone_number])
+    phone = serializers.CharField(
+        validators=[validate_international_phone_number])
     password = serializers.CharField(
         max_length=124, min_length=4, write_only=True,
         error_messages={
@@ -145,7 +144,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if not validate_international_phone_number(data.get('phone')):
-            raise serializers.ValidationError({'phone': 'Please enter a valid international phone number'})
+            raise serializers.ValidationError(
+                {'phone': 'Please enter a valid international phone number'})
         validated_data = super().validate(data)
 
         role = data.get('role', None)

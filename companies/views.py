@@ -80,9 +80,8 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         return CargoOwnerCompany.active_objects.all_objects()
 
     def retrieve(self, request, pk):
-        company = self.get_object()
-        self.check_object_permissions(request, company)
-        serialized_company = self.serializer_class(company)
+        obj = self.get_object()
+        serialized_company = self.serializer_class(obj)
         respose = {
             "Message": "Company Successfully Retrieved",
             "Company": serialized_company.data
@@ -90,13 +89,17 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
         return Response(respose, status=status.HTTP_200_OK)
 
-    def update(self, request, pk):
+    def update(self, request, **kwargs):
         """ Update an existing company """
-        company = self.get_object()
-        self.check_object_permissions(request, company)
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        kwargs['partial'] = True
         data_to_update = request.data
+        company = data_to_update.get('company', None)
+        if company:
+            company.pop('company_director')
         serializer = self.serializer_class(
-            company, data=data_to_update, partial=True)
+            obj, data=data_to_update, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -140,8 +143,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, pk):
         company = self.get_object()
-        self.check_object_permissions(request, company)
-        serialize = self.serializer_class(company)
+        serialize = self.serializer_class(company,)
         respose = {
             "Message": "Company Successfully Retrieved",
             "Company": serialize.data
@@ -149,13 +151,17 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
         return Response(respose, status=status.HTTP_200_OK)
 
-    def update(self, request, pk):
+    def update(self, request, **kwargs):
         """ Update an existing company """
-        company = self.get_object()
-        self.check_object_permissions(request, company)
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        kwargs['partial'] = True
         data_to_update = request.data
+        company = data_to_update.get('company', None)
+        if company:
+            company.pop('company_director', None)
         serializer = self.serializer_class(
-            company, data=data_to_update, partial=True)
+            obj, data=data_to_update, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -322,8 +328,9 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
         # sends authentication credentials to employee's email
         send_mail(subject, message, from_email,
                   recipient_list, fail_silently=False)
-        #sms notifications
-        send_sms(message=f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}",recipients=[phone])
+        # sms notifications
+        send_sms(
+            message=f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}", recipients=[phone])
         response = {
             "message": "employee added succesfully",
             "employee": serializer.data
@@ -381,12 +388,14 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
                 obj.is_active = False
                 send_mail(subject="Shyper Account suspension", message="your account has been suspended", from_email=EMAIL_HOST_USER,
                           recipient_list=[obj.email], fail_silently=False)
-                send_sms(message="your shypper account has been suspended",recipients=[obj.phone])
+                send_sms(message="your shypper account has been suspended",
+                         recipients=[obj.phone])
             if suspend.lower() == 'false':
                 obj.is_active = True
                 send_mail(subject="Shyper Account reactivation", message="your account suspension has been uplifted", from_email=EMAIL_HOST_USER,
                           recipient_list=[obj.email], fail_silently=False)
-                send_sms(message="your shypper account has been reactivated",recipients=[obj.phone])
+                send_sms(
+                    message="your shypper account has been reactivated", recipients=[obj.phone])
             obj.save()
         response = {
             "message": "employee data succesfully updated",

@@ -68,7 +68,7 @@ class IsAdminOrCompanyOwner(permissions.BasePermission):
     """
     check if shyper or cargo owner admin
     """
-    message = 'you must be a cargo owner who owns the obj to perform this'
+    message = 'you must be a company owner who owns the obj to perform this'
 
     def has_permission(self, request, view):
 
@@ -81,7 +81,8 @@ class IsAdminOrCompanyOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        return obj.company_director == user or user.is_superuser
+
+        return obj.company.company_director == user or user.is_superuser
 
 
 class IsAdminOrCargoOwnerRates(permissions.BasePermission):
@@ -140,7 +141,7 @@ class IsAdminOrAssetOwner(permissions.BasePermission):
         if str(user.role) == "transporter-director":
             company = Company.objects.get(company_director=user)
             transporter = TransporterCompany.objects.get(company=company)
-            
+
         if str(user.role) == "admin" or str(user.role) == "staff":
             company = user.employer
             transporter = TransporterCompany.objects.get(company=company)
