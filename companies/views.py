@@ -300,28 +300,33 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
-        if str(user.role) == 'superuser':
+        if user.is_superuser:
+            companies = []
             for c in Company.objects.all():
-                return c.employees.all()
+                companies.append(c)
+                for company in companies:
+                    return company.employees.all()
 
     def post(self, request, format=None):
         user = self.request.user
+        data = request.data.copy()
         if str(user.role) == "admin":
             company = user.employer
-        else:
+            data['employer'] = company.pk
+        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
             company = Company.objects.get(company_director=user)
-        data = request.data.copy()
-        data['employer'] = company.pk
+            data['employer'] = company.pk
         password = BaseUserManager().make_random_password(
             10)  # generate random password for the user
         data['password'] = password
         email = data['email']
         phone = data['phone']
+        company = Company.objects.get(id=data['employer'])
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         subject = f"{company} new employee"
-        message = f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}"
+        message = f"Your  account for {company} has been created  . Login credentials are \nYour email is : {email} \n password: {password}"
         from_email = EMAIL_HOST_USER
         recipient_list = [email]
 
@@ -330,7 +335,7 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
                   recipient_list, fail_silently=False)
         # sms notifications
         send_sms(
-            message=f"Your  account has been created by {company}. Login credentials are \n Your email is : {email} \n password: {password}", recipients=[phone])
+            message=f"Your  account for {company} has been created . Login credentials are \n Your email is : {email} \n password: {password}", recipients=[phone])
         response = {
             "message": "employee added succesfully",
             "employee": serializer.data
@@ -356,9 +361,13 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
-        if str(user.role) == 'superuser':
+        if user.is_superuser:
+            companies = []
             for c in Company.objects.all():
-                return c.employees.all()
+                companies.append(c)
+                for company in companies:
+                    return company.employees.all()
+
 
     def retrieve(self, request, pk):
         employee = self.get_object()
