@@ -168,3 +168,23 @@ class IsComponyAdminOrDirectorOrStaffReadOnly(permissions.BasePermission):
         else:
             company = user.employer
         return obj.employer == company or user.is_superuser
+
+
+class IsOwnerOrAdmin(permissions.BasePermission):
+    """to allow only admin and owner of profile to edit profile"""
+    message = "you must be the owner or admin to perform this action"
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if request.method in SAFE_METHODS and request.user.is_authenticated:
+            return True
+
+        if(str(user.role) == "transporter-director" or str(user.role) == "cargo-owner-director"):
+            company = Company.objects.get(company_director=user)
+            return obj.user.employer == company
+
+        if str(user.role) == "admin":
+            company = user.employer
+            return obj.user.employer == company
+
+        return obj.user == user or user.is_superuser

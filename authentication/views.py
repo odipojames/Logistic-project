@@ -5,8 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from authentication.serializers import LoginSerializer, RegistrationSerializer, UserUpdateSerializer
+from django.shortcuts import get_object_or_404
+
+from authentication.serializers import LoginSerializer, RegistrationSerializer, UserUpdateSerializer, ProfileSerializer
 from utils.renderers import JsnRenderer
+from authentication.models import Profile
+from utils.permissions import IsOwnerOrAdmin
+from companies.models import Company, CargoOwnerCompany, TransporterCompany
 
 
 class RegistrationAPIView(generics.CreateAPIView):
@@ -88,3 +93,72 @@ def logout_view(request):
 
     except TokenError:
         return Response({"detail": "You are already logged out."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListProfileAPIView(generics.ListAPIView):
+    """list user profiles """
+    renderer_classes = (JsnRenderer,)
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated, IsOwnerOrAdmin,)
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return Profile.objects.all()
+
+        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+            company = Company.objects.get(company_director=user)
+            return Profile.objects.filter(user__employer=company)
+
+        if str(user.role) == 'admin' or str(user.role) == 'staff':
+            company = user.employer
+            return Profile.objects.filter(user__employer=company)
+
+
+class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
+    """user profile update api """
+    renderer_classes = (JsnRenderer,)
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated, IsOwnerOrAdmin,)
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return Profile.objects.all()
+
+        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+            company = Company.objects.get(company_director=user)
+            return Profile.objects.filter(user__employer=company)
+
+        if str(user.role) == 'admin' or str(user.role) == 'staff':
+            company = user.employer
+            return Profile.objects.filter(user__employer=company)
+
+    def retrieve(self, request, pk):
+        profile = self.get_object()
+        serializer = self.serializer_class(profile,)
+        response = {
+            "message": "profile retrieved succesfully",
+            "profile": serializer.data
+        }
+        return Response(response, status.HTTP_200_OK)
+
+    def update(self, request, **kwargs):
+
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        kwargs['partial'] = True
+        data = request.data
+        data.pop('user')
+        serializer = self.serializer_class(
+            obj, data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response = {
+            "message": "profile info succesfully updated",
+            "profile": serializer.data
+
+        }
+        return Response(response, status.HTTP_200_OK)

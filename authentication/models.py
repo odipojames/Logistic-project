@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.validators import validate_international_phone_number
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class UserManager(BaseUserManager):
     """
@@ -14,7 +17,8 @@ class UserManager(BaseUserManager):
     def create_user(self, full_name=None, email=None, password=None, phone=None, role=None, **kwargs):
         REQUIRED_ARGS = ("full_name", "email", "password", "phone")
 
-        enforce_all_required_arguments_are_truthy({"full_name": full_name, "email": email, "password": password, "phone": phone}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy(
+            {"full_name": full_name, "email": email, "password": password, "phone": phone}, REQUIRED_ARGS)
 
         # Create role first. If a role already exists, we don't create it again.
         role = Role.active_objects.get_or_create(title=role)[0]
@@ -48,27 +52,30 @@ class UserManager(BaseUserManager):
         This is the method that creates superusers in the database.
         '''
 
-        admin = self.create_user(full_name=full_name, email=email, password=password, role="superuser", phone=phone, is_superuser=True, is_staff=True, is_verified=True, is_active=True)
+        admin = self.create_user(full_name=full_name, email=email, password=password, role="superuser",
+                                 phone=phone, is_superuser=True, is_staff=True, is_verified=True, is_active=True)
 
         return admin
 
     def create_transporter(
             self, full_name=None, email=None, password=None, phone=None, role="transporter-director", **kwargs):
         '''
-        This is the to create transporter company director/admin
+        This  creates transporter company director/admin
         '''
 
-        transporter = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
+        transporter = self.create_user(full_name=full_name, email=email, password=password, role=role,
+                                       phone=phone, is_superuser=False, is_staff=False, is_verified=False, is_active=True)
 
         return transporter
 
     def create_cargo_owner(
             self, full_name=None, email=None, password=None, phone=None, role="cargo-owner-director", **kwargs):
         '''
-        This is the to create cargoOwner company director/admin
+        This  creates cargoOwner company director/admin
         '''
 
-        cargoOwner = self.create_user(full_name=full_name, email=email, password=password, role=role, phone=phone, is_superuser=False, is_staff=True, is_verified=False, is_active=True)
+        cargoOwner = self.create_user(full_name=full_name, email=email, password=password, role=role,
+                                      phone=phone, is_superuser=False, is_staff=False, is_verified=False, is_active=True)
 
         return cargoOwner
 
@@ -78,7 +85,8 @@ class UserManager(BaseUserManager):
         This is the to create the driver
         '''
 
-        driver = self.create_user(full_name=full_name, email=email, is_verified=is_verified,role="driver", password=password, phone=phone, is_superuser=False, is_active=True)
+        driver = self.create_user(full_name=full_name, email=email, is_verified=is_verified,
+                                  role="driver", password=password, phone=phone, is_superuser=False, is_active=True)
 
         driver.is_verified = True
         return driver
@@ -96,8 +104,10 @@ class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    employer = models.ForeignKey("companies.Company", on_delete=models.CASCADE,related_name="employees", null=True, blank=True)
-    role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="users", to_field="title")
+    employer = models.ForeignKey(
+        "companies.Company", on_delete=models.CASCADE, related_name="employees", null=True, blank=True)
+    role = models.ForeignKey(
+        "Role", on_delete=models.CASCADE, related_name="users", to_field="title")
     REQUIRED_FIELDS = ['full_name', "phone"]
     USERNAME_FIELD = 'email'
 
@@ -128,7 +138,8 @@ class User(PermissionsMixin, AbstractBaseModel, AbstractBaseUser):
         phone = self.phone
 
         if not validate_international_phone_number(phone):
-            raise ValidationError({"phone": "Please enter a valid international phone number."})
+            raise ValidationError(
+                {"phone": "Please enter a valid international phone number."})
         return super().clean()
 
 
@@ -136,10 +147,38 @@ class Role(AbstractBaseModel, models.Model):
     """
     Contains the Role that each user must have.
     """
-    role_choice = (("transporter-director","transporter-director"),("cargo-owner-director","cargo-owner-director"),("driver","driver"),("admin","admin"),("staff","staff"),("superuser","superuser"))
-    title = models.CharField(max_length=100,choices=role_choice, help_text="User's role within employer's organization.", unique=True)
+    role_choice = (("transporter-director", "transporter-director"), ("cargo-owner-director", "cargo-owner-director"),
+                   ("driver", "driver"), ("admin", "admin"), ("staff", "staff"), ("superuser", "superuser"))
+    title = models.CharField(max_length=100, choices=role_choice,
+                             help_text="User's role within employer's organization.", unique=True)
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 
     def __str__(self):
         return self.title
+
+
+class Profile(models.Model):
+    """create user profiles"""
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='user_profile')
+    profile_picture = models.ImageField(
+        upload_to='documents/profile/', null=True, blank=True)
+    id_or_passport = models.CharField(max_length=20, blank=True, null=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    person_contact_name = models.CharField(
+        max_length=50, blank=True, null=True)
+    person_contact_phone = models.CharField(
+        max_length=50, null=True, blank=True)
+
+    @receiver(post_save, sender=User)
+    def create_user_profile(sender, instance, created, **kwargs):
+        if created:
+            Profile.objects.create(user=instance)
+
+    @receiver(post_save, sender=User)
+    def save_user_profile(sender, instance, **kwargs):
+        instance.user_profile.save()
+
+    def __str__(self):
+        return self.user.full_name

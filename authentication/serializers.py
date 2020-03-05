@@ -5,9 +5,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 
-from authentication.models import User
+from authentication.models import User, Profile
 from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
+from utils.validators import validate_international_phone_number
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -186,6 +187,24 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         return User.objects.create_cargo_owner(**validated_data)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """user profile serializer"""
+    date_of_birth = serializers.DateField(input_formats=['%d-%m-%Y', ])
+
+    class Meta:
+        model = Profile
+        fields = '__all__'
+
+    def validate(self, data):
+
+        if not validate_international_phone_number(data.get('person_contact_phone')):
+            raise serializers.ValidationError(
+                {'person_contact_phone': 'Please enter a valid international phone number'})
+        validated_data = super().validate(data)
+
+        return validated_data
 
 
 class CustomTokenSerializer(serializers.Serializer):
