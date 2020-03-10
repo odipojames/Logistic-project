@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from authentication.models import User, Profile
 from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
-from utils.validators import validate_international_phone_number
+
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -189,9 +189,17 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_cargo_owner(**validated_data)
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "email",
+                  "phone", "role", "employer"]
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     """user profile serializer"""
     date_of_birth = serializers.DateField(input_formats=['%d-%m-%Y', ])
+    user = UserSerializer(read_only = True)
 
     class Meta:
         model = Profile
