@@ -6,6 +6,10 @@ from django.contrib.auth.password_validation import validate_password
 from authentication.serializers import TransporterRegistrationSerializer, CargoOwnerRegistrationSerializer
 from django.contrib.auth.base_user import BaseUserManager
 from utils.validators import validate_international_phone_number
+from django.core import exceptions
+import django.contrib.auth.password_validation as validators
+from utils.helpers import get_errored_integrity_field
+from django.db.utils import IntegrityError
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -40,8 +44,15 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         company_data = validated_data.pop('company')  # get company instance
         user_data = company_data.pop('company_director')
-        user = User.objects.create_cargo_owner(
-            **user_data)  # create the company director
+        try:
+            user = User.objects.create_cargo_owner(**user_data)
+        except IntegrityError as exc:
+            errored_field = get_errored_integrity_field(exc)
+            if errored_field:
+                raise serializers.ValidationError(
+                    {errored_field: f"A company user is already registered with this {errored_field}."}) from exc
+        except ValidationError as exc:
+            raise serializers.ValidationError(exc.args[0]) from exc
         company = Company.objects.create(
             company_director=user, **company_data)  # create company
         cargo_company = CargoOwnerCompany.active_objects.create(
@@ -51,7 +62,7 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         company_data = validated_data.pop("company", None)
         if company_data:
-            company_data.pop('company_director',None)  # remove director
+            company_data.pop('company_director', None)  # remove director
             company = instance.company
             serializer = CargoOwnerRegistrationSerializer(
                 data=company_data, partial=True)
@@ -73,8 +84,16 @@ class TransporterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         company_data = validated_data.pop('company')  # get company instance
         user_data = company_data.pop('company_director')
-        user = User.objects.create_transporter(
-            **user_data)  # create the company director
+        try:
+            user = User.objects.create_transporter(
+                **user_data)  # create the company director
+        except IntegrityError as exc:
+            errored_field = get_errored_integrity_field(exc)
+            if errored_field:
+                raise serializers.ValidationError(
+                    {errored_field: f"A company user is already registered with this {errored_field}."}) from exc
+        except ValidationError as exc:
+            raise serializers.ValidationError(exc.args[0]) from exc
         company = Company.objects.create(
             company_director=user, **company_data)  # create company
         transport_company = TransporterCompany.active_objects.create(
@@ -85,7 +104,7 @@ class TransporterSerializer(serializers.ModelSerializer):
 
         company_data = validated_data.pop('company', None)
         if company_data:
-            company_data.pop('company_director',None)
+            company_data.pop('company_director', None)
             company = instance.company
             serializer = TransporterRegistrationSerializer(
                 data=company_data, partial=True)
