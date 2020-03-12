@@ -57,6 +57,10 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
             company_director=user, **company_data)  # create company
         cargo_company = CargoOwnerCompany.active_objects.create(
             company=company, **validated_data)  # create cargo owner company
+        director = cargo_company.company.company_director
+        # make director be employee of its company
+        director.employer = cargo_company.company
+        director.save()
         return cargo_company
 
     def update(self, instance, validated_data):
@@ -98,6 +102,9 @@ class TransporterSerializer(serializers.ModelSerializer):
             company_director=user, **company_data)  # create company
         transport_company = TransporterCompany.active_objects.create(
             company=company, **validated_data)  # create transporter owner company
+        director = transport_company.company.company_director
+        director.employer = transport_company.company
+        director.save()
         return transport_company
 
     def update(self, instance, validated_data):
