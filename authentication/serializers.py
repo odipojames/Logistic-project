@@ -10,16 +10,15 @@ from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
 
 
-
 class RegistrationSerializer(serializers.Serializer):
     """
     Serializer for handling user registration
     """
 
     email = serializers.EmailField()
-    phone = serializers.CharField(required=False)
-    full_name = serializers.CharField(max_length=100, validators=[
-                                      validate_international_phone_number])
+    phone = serializers.CharField(max_length=15, validators=[
+                                  validate_international_phone_number])
+    full_name = serializers.CharField(max_length=100)
     role = serializers.CharField()
     password = serializers.CharField(
         max_length=124, min_length=8, write_only=True)
@@ -148,7 +147,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class TransporterRegistrationSerializer(serializers.ModelSerializer):
     '''register transporter as a user'''
     full_name = serializers.CharField()
-    phone = serializers.CharField()
+    phone = serializers.CharField(max_length=15, validators=[
+                                  validate_international_phone_number])
     role = serializers.CharField(default="transporter-director")
     password = serializers.CharField(
         max_length=124, min_length=4, write_only=True,
@@ -170,7 +170,8 @@ class TransporterRegistrationSerializer(serializers.ModelSerializer):
 class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
     '''register cargo owner as a user'''
     full_name = serializers.CharField()
-    phone = serializers.CharField()
+    phone = serializers.CharField(max_length=15, validators=[
+                                  validate_international_phone_number])
     role = serializers.CharField(default="cargo-owner-director")
     password = serializers.CharField(
         max_length=124, min_length=8, write_only=True,
@@ -199,7 +200,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     """user profile serializer"""
     date_of_birth = serializers.DateField(input_formats=['%d-%m-%Y', ])
-    user = UserSerializer(read_only = True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Profile

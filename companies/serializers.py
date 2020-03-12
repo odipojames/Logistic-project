@@ -16,6 +16,8 @@ class CompanySerializer(serializers.ModelSerializer):
     """creating company dirctor for cargo owners """
     company_director = CargoOwnerRegistrationSerializer()
     is_shypper = serializers.BooleanField(default=False)
+    business_phone_no = serializers.CharField(
+        max_length=15, validators=[validate_international_phone_number])
 
     class Meta:
         model = Company
@@ -26,6 +28,8 @@ class CompanyTSerializer(serializers.ModelSerializer):
     """creating company  director for transporters"""
     company_director = TransporterRegistrationSerializer()
     is_shypper = serializers.BooleanField(default=False)
+    business_phone_no = serializers.CharField(
+        max_length=15, validators=[validate_international_phone_number])
 
     class Meta:
         model = Company
@@ -95,7 +99,9 @@ class TransporterSerializer(serializers.ModelSerializer):
             errored_field = get_errored_integrity_field(exc)
             if errored_field:
                 raise serializers.ValidationError(
-                    {errored_field: f"A company user is already registered with this {errored_field}."}) from exc
+                    {'company': {'company_director': {
+                        errored_field: f"A company user is already registered with this {errored_field}."}}}
+                ) from exc
         except ValidationError as exc:
             raise serializers.ValidationError(exc.args[0]) from exc
         company = Company.objects.create(

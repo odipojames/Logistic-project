@@ -8,20 +8,26 @@ from authentication.models import User, UserManager
 from utils.validators import validate_file_extension, validate_international_phone_number
 from cargo_types.models import Commodity
 
+
 class PersonOfContactManager(models.Manager):
     """
     Points of Contact manager for cargo owner to creating
     people to contact
     """
+
     def create_person_of_contact(self, company=None, name=None, email=None, phone=None):
-        REQUIRED_ARGS = ('company','name', 'phone')
-        enforce_all_required_arguments_are_truthy({'company' : company, 'name' : name, 'email' : email, 'phone' : phone}, REQUIRED_ARGS)
-        person_of_contact = self.model(company=company, name=name, email=email, phone=phone)
+        REQUIRED_ARGS = ('company', 'name', 'phone')
+        enforce_all_required_arguments_are_truthy(
+            {'company': company, 'name': name, 'email': email, 'phone': phone}, REQUIRED_ARGS)
+        person_of_contact = self.model(
+            company=company, name=name, email=email, phone=phone)
         person_of_contact.save()
         return person_of_contact
 
+
 class PersonOfContactQuerySet(ActiveObjectsQuerySet):
     """Queryset to be used by PersonOfContact model"""
+
     def get_person_of_contact(self, company=None):
         """returns person of contact a specific cargo owner"""
         return self._active().filter(company=company)
@@ -29,13 +35,14 @@ class PersonOfContactQuerySet(ActiveObjectsQuerySet):
 
 class BaseCompany(models.Model):
     # business details
-    business_name = models.CharField(max_length=20,unique=True)
+    business_name = models.CharField(max_length=20, unique=True)
     business_type = models.CharField(max_length=200, choices=[(
         'single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')])
-    account_number = models.CharField(max_length=50,unique=True)
+    account_number = models.CharField(max_length=50, unique=True)
     prefered_currency = models.CharField(max_length=200)
     logo = models.ImageField(upload_to='documents/')
-    business_phone_no = models.CharField(max_length=20, validators=[validate_international_phone_number],unique=True)
+    business_phone_no = models.CharField(max_length=20, validators=[
+                                         validate_international_phone_number], unique=True)
     business_email = models.EmailField(unique=True)
     postal_code = models.CharField(max_length=50, null=True)
     location = models.CharField(
@@ -51,14 +58,14 @@ class BaseCompany(models.Model):
     directors_id = models.FileField(
         upload_to="documents/", validators=[validate_file_extension])
 
-
     objects = models.Manager()
+
     class Meta:
         abstract = True
         app_label = 'companies'
 
 
-class Company(BaseCompany,models.Model):
+class Company(BaseCompany, models.Model):
     is_shypper = models.BooleanField(default=False)
 
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -73,7 +80,7 @@ class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
     potential_monthly_tonnage = models.CharField(max_length=200)
     operational_hours = models.CharField(
         max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
-    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
+    company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
     objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
 
@@ -98,7 +105,7 @@ class TransporterCompany(AbstractBaseModel):
         upload_to="documents/", validators=[validate_file_extension], null=True, blank=True)
     cross_boarder_operation = models.FileField(
         upload_to="documents/", validators=[validate_file_extension])
-    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
+    company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -108,12 +115,13 @@ class TransporterCompany(AbstractBaseModel):
         return self.company.business_name
 
 
-
 class PersonOfContact(AbstractBaseModel):
-    company = models.ForeignKey('companies.CargoOwnerCompany', on_delete=models.CASCADE)
+    company = models.ForeignKey(
+        'companies.CargoOwnerCompany', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20, validators=[validate_international_phone_number], unique=True)
+    phone = models.CharField(max_length=20, validators=[
+                             validate_international_phone_number], unique=True)
 
     objects = PersonOfContactManager()
     active_objects = PersonOfContactQuerySet.as_manager()
@@ -124,7 +132,7 @@ class PersonOfContact(AbstractBaseModel):
 
 class Shypper(AbstractBaseModel):
 
-    company = models.OneToOneField(Company,on_delete=models.DO_NOTHING)
+    company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
