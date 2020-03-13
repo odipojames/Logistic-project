@@ -368,7 +368,6 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
                 for company in companies:
                     return company.employees.all()
 
-
     def retrieve(self, request, pk):
         employee = self.get_object()
         serializer = self.serializer_class(employee,)

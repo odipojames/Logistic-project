@@ -1,14 +1,17 @@
 from rest_framework import serializers, exceptions
+from rest_framework.validators import UniqueValidator
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate, get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenRefreshSerializer,
+)
 
 from authentication.models import User, Profile
 from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
-
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -17,30 +20,36 @@ class RegistrationSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField()
-    phone = serializers.CharField(required=False)
-    full_name = serializers.CharField(max_length=100, validators=[
-                                      validate_international_phone_number])
+    phone = serializers.CharField(
+        max_length=15,
+        validators=[
+            validate_international_phone_number,
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user is already registered with this phone number",
+            ),
+        ],
+    )
+    full_name = serializers.CharField(max_length=100)
     role = serializers.CharField()
     password = serializers.CharField(
-        max_length=124, min_length=8, write_only=True)
+        max_length=124, min_length=8, write_only=True, validators=[validate_password]
+    )
     confirmed_password = serializers.CharField(
-        max_length=124, min_length=8, write_only=True)
+        max_length=124, min_length=8, write_only=True
+    )
 
     def validate(self, data):
         """validate data before it gets saved"""
         confirmed_password = data.get("confirmed_password")
 
         try:
-            validate_password(data['password'])
+            validate_password(data["password"])
         except ValidationError as e:
-            raise serializers.ValidationError({
-                "password": e.messages
-            }) from e
+            raise serializers.ValidationError({"password": e.messages}) from e
 
-        if not self.do_passwords_match(data['password'], confirmed_password):
-            raise serializers.ValidationError({
-                "password": "passwords don't match"
-            })
+        if not self.do_passwords_match(data["password"], confirmed_password):
+            raise serializers.ValidationError({"password": "passwords don't match"})
 
         return data
 
@@ -54,7 +63,10 @@ class RegistrationSerializer(serializers.Serializer):
             errored_field = get_errored_integrity_field(exc)
             if errored_field:
                 raise serializers.ValidationError(
-                    {errored_field: f"A user is already registered with this {errored_field}."}) from exc
+                    {
+                        errored_field: f"A user is already registered with this {errored_field}."
+                    }
+                ) from exc
         except ValidationError as exc:
             raise serializers.ValidationError(exc.args[0]) from exc
 
@@ -89,11 +101,14 @@ class LoginSerializer(TokenObtainPairSerializer):
 
         if not user:
             raise exceptions.AuthenticationFailed(
-                detail="Wrong email or password", code="authentication_failed")
+                detail="Wrong email or password", code="authentication_failed"
+            )
 
         if user.is_verified == False:
             raise exceptions.AuthenticationFailed(
-                detail="your account has not been verified please contact Shipper", code="unverified_account")
+                detail="your account has not been verified please contact Shipper",
+                code="unverified_account",
+            )
 
         if user:
 
@@ -105,15 +120,24 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
     password = serializers.CharField(
-        max_length=124,
-        min_length=8,
-        write_only=True
+        max_length=124, min_length=8, write_only=True, validators=[validate_password]
     )
 
     class Meta:
         model = User
-        exclude = ["is_verified", "date_joined", "is_staff", "is_active", "groups",
-                   "user_permissions", "is_deleted", "created_at", "updated_at", "last_login", "is_superuser"]
+        exclude = [
+            "is_verified",
+            "date_joined",
+            "is_staff",
+            "is_active",
+            "groups",
+            "user_permissions",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+            "last_login",
+            "is_superuser",
+        ]
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
 
@@ -122,7 +146,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         # we need to remove the password field from the
         # `validated_data` dictionary before iterating over it.
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
 
         for (key, value) in validated_data.items():
             # For the keys remaining in `validated_data`, we will set them on
@@ -146,21 +170,31 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 
 class TransporterRegistrationSerializer(serializers.ModelSerializer):
-    '''register transporter as a user'''
+    """register transporter as a user"""
+
     full_name = serializers.CharField()
-    phone = serializers.CharField()
-    role = serializers.CharField(default="transporter-director")
-    password = serializers.CharField(
-        max_length=124, min_length=4, write_only=True,
-        error_messages={
-            "min_length": "Password should be {min_length} characters and above"
-        }
+    phone = serializers.CharField(
+        max_length=15,
+        validators=[
+            validate_international_phone_number,
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user is already registered with this phone number",
+            ),
+        ],
     )
+    role = serializers.CharField(default="transporter-director")
+    password = serializers.CharField(write_only=True, validators=[validate_password])
 
     class Meta:
         model = User
-        fields = ["email", "full_name", 'phone',
-                  "password", "role", ]
+        fields = [
+            "email",
+            "full_name",
+            "phone",
+            "password",
+            "role",
+        ]
 
     def create(self, validated_data):
 
@@ -168,21 +202,31 @@ class TransporterRegistrationSerializer(serializers.ModelSerializer):
 
 
 class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
-    '''register cargo owner as a user'''
+    """register cargo owner as a user"""
+
     full_name = serializers.CharField()
-    phone = serializers.CharField()
-    role = serializers.CharField(default="cargo-owner-director")
-    password = serializers.CharField(
-        max_length=124, min_length=8, write_only=True,
-        error_messages={
-            "min_length": "Password should be {min_length} characters and above"
-        }
+    phone = serializers.CharField(
+        max_length=15,
+        validators=[
+            validate_international_phone_number,
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user is already registered with this phone number",
+            ),
+        ],
     )
+    role = serializers.CharField(default="cargo-owner-director")
+    password = serializers.CharField(write_only=True, validators=[validate_password])
 
     class Meta:
         model = User
-        fields = ["email", "full_name", 'phone',
-                  "password", "role", ]
+        fields = [
+            "email",
+            "full_name",
+            "phone",
+            "password",
+            "role",
+        ]
 
     def create(self, validated_data):
 
@@ -190,26 +234,43 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+
+    phone = serializers.CharField(
+        validators=[
+            validate_international_phone_number,
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user is already registered with this phone number",
+            ),
+        ]
+    )
+
     class Meta:
         model = User
-        fields = ["id", "full_name", "email",
-                  "phone", "role", "employer"]
+        fields = ["id", "full_name", "email", "phone", "role", "employer"]
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     """user profile serializer"""
-    date_of_birth = serializers.DateField(input_formats=['%d-%m-%Y', ])
-    user = UserSerializer(read_only = True)
+
+    date_of_birth = serializers.DateField(input_formats=["%d-%m-%Y",])
+    user = UserSerializer(read_only=True)
+    person_contact_phone = serializers.CharField(
+        validators=[validate_international_phone_number]
+    )
 
     class Meta:
         model = Profile
-        fields = '__all__'
+        fields = "__all__"
 
     def validate(self, data):
 
-        if not validate_international_phone_number(data.get('person_contact_phone')):
+        if not validate_international_phone_number(data.get("person_contact_phone")):
             raise serializers.ValidationError(
-                {'person_contact_phone': 'Please enter a valid international phone number'})
+                {
+                    "person_contact_phone": "Please enter a valid international phone number"
+                }
+            )
         validated_data = super().validate(data)
 
         return validated_data
@@ -217,4 +278,5 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class CustomTokenSerializer(serializers.Serializer):
     """custome tokenVerification"""
+
     token = serializers.CharField()

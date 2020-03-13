@@ -3,6 +3,8 @@ from datetime import datetime
 import os
 from django.core.exceptions import ValidationError
 from .helpers import read_csv
+from rest_framework.validators import ValidationError
+
 
 def validate_international_phone_number(phone):
     """
@@ -22,8 +24,9 @@ def validate_international_phone_number(phone):
     match = re.search(regex_pattern, phone)
 
     if not match:
-        return False
-    return True
+        raise ValidationError(
+            ["please enter correct international phone number."])
+    return phone
 
 
 def validate_start_date_is_before_end_date(start_date, end_date):
