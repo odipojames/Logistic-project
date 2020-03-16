@@ -7,7 +7,7 @@ from authentication.views import (
     UserUpdateAPIView,
     logout_view,
     ProfileRetrieveUpdateDestroyAPIView,
-    ListProfileAPIView,
+    GetProfileAPIView,
 )
 
 urlpatterns = [
@@ -20,7 +20,7 @@ urlpatterns = [
         "reset-password/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
-    path("user_profile/", ListProfileAPIView.as_view(), name="profiles"),
+    path("user_profile/", GetProfileAPIView.as_view(), name="profiles"),
     path(
         "user_profile/<int:pk>",
         ProfileRetrieveUpdateDestroyAPIView.as_view(),

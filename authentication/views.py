@@ -109,29 +109,27 @@ def logout_view(request):
         )
 
 
-class ListProfileAPIView(generics.ListAPIView):
-    """list user profiles """
+class GetProfileAPIView(generics.ListAPIView):
+    """Get the profile of the user who is currently logged in"""
 
     renderer_classes = (JsnRenderer,)
     serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated, IsOwnerOrAdmin)
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
+        """
+        Only return the profile of the currently logged in User
+        """
         user = self.request.user
 
-        if user.is_superuser:
-            return Profile.objects.all()
+        try:
+            # some users might not have a profile, either because signal did not fire
+            # or they existed before signal profile was fired.
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            profile = Profile.objects.create(user=user)
 
-        if (
-            str(user.role) == "transporter-director"
-            or str(user.role) == "cargo-owner-director"
-        ):
-            company = Company.objects.get(company_director=user)
-            return Profile.objects.filter(user__employer=company)
-
-        if str(user.role) == "admin" or str(user.role) == "staff":
-            company = user.employer
-            return Profile.objects.filter(user__employer=company)
+        return Profile.objects.filter(user=user)
 
 
 class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
