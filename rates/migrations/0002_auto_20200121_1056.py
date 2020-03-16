@@ -7,38 +7,43 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('rates', '0001_initial'),
-    ]
+    dependencies = [("rates", "0001_initial")]
 
     operations = [
         migrations.RenameField(
-            model_name='rate',
-            old_name='prefered_currency',
-            new_name='preferred_currency',
+            model_name="rate",
+            old_name="prefered_currency",
+            new_name="preferred_currency",
         ),
-        migrations.RemoveField(
-            model_name='rate',
-            name='type',
+        migrations.RemoveField(model_name="rate", name="type"),
+        migrations.AddField(
+            model_name="rate",
+            name="price_per_kg",
+            field=models.DecimalField(
+                blank=True, decimal_places=4, default=Decimal("0"), max_digits=12
+            ),
         ),
         migrations.AddField(
-            model_name='rate',
-            name='price_per_kg',
-            field=models.DecimalField(blank=True, decimal_places=4, default=Decimal('0'), max_digits=12),
+            model_name="rate",
+            name="price_per_km",
+            field=models.DecimalField(
+                blank=True, decimal_places=4, default=Decimal("0"), max_digits=12
+            ),
         ),
         migrations.AddField(
-            model_name='rate',
-            name='price_per_km',
-            field=models.DecimalField(blank=True, decimal_places=4, default=Decimal('0'), max_digits=12),
-        ),
-        migrations.AddField(
-            model_name='rate',
-            name='price_per_truck',
-            field=models.DecimalField(blank=True, decimal_places=4, default=Decimal('0'), max_digits=12),
+            model_name="rate",
+            name="price_per_truck",
+            field=models.DecimalField(
+                blank=True, decimal_places=4, default=Decimal("0"), max_digits=12
+            ),
         ),
         migrations.AlterField(
-            model_name='rate',
-            name='created_by',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rates', to='companies.CargoOwnerCompany'),
+            model_name="rate",
+            name="created_by",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="rates",
+                to="companies.CargoOwnerCompany",
+            ),
         ),
     ]

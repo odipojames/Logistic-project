@@ -11,92 +11,250 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
+    dependencies = [migrations.swappable_dependency(settings.AUTH_USER_MODEL)]
 
     operations = [
         migrations.CreateModel(
-            name='TransporterCompany',
+            name="TransporterCompany",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('business_name', models.CharField(max_length=20)),
-                ('business_type', models.CharField(choices=[('single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')], max_length=200)),
-                ('account_number', models.CharField(max_length=50)),
-                ('prefered_currency', models.CharField(max_length=200)),
-                ('logo', models.ImageField(upload_to='documents/')),
-                ('business_phone_no', models.CharField(max_length=20, validators=[utils.validators.validate_international_phone_number])),
-                ('business_email', models.EmailField(max_length=254)),
-                ('postal_code', models.CharField(max_length=50, null=True)),
-                ('location', models.CharField(help_text='Street, City, Country', max_length=200)),
-                ('operational_regions', models.CharField(choices=[('locals', 'locals'), ('transit', 'transit'), ('both', 'both')], max_length=30)),
-                ('is_active', models.BooleanField(default=False)),
-                ('certificate_of_incorporation', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('directors_id', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('number_of_trucks', models.CharField(help_text='truck types + quantity', max_length=200)),
-                ('number_of_drivers', models.PositiveIntegerField()),
-                ('goods_in_transit_insurance', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('tax_compliance_certificate', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('ntsa_inspection_certificates', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('icdn_or_port_passes', models.FileField(blank=True, null=True, upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('cross_boarder_operation', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('company_director', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("business_name", models.CharField(max_length=20)),
+                (
+                    "business_type",
+                    models.CharField(
+                        choices=[
+                            ("single", "single"),
+                            ("Corporate", "Corporate"),
+                            ("others", "others"),
+                        ],
+                        max_length=200,
+                    ),
+                ),
+                ("account_number", models.CharField(max_length=50)),
+                ("prefered_currency", models.CharField(max_length=200)),
+                ("logo", models.ImageField(upload_to="documents/")),
+                (
+                    "business_phone_no",
+                    models.CharField(
+                        max_length=20,
+                        validators=[
+                            utils.validators.validate_international_phone_number
+                        ],
+                    ),
+                ),
+                ("business_email", models.EmailField(max_length=254)),
+                ("postal_code", models.CharField(max_length=50, null=True)),
+                (
+                    "location",
+                    models.CharField(help_text="Street, City, Country", max_length=200),
+                ),
+                (
+                    "operational_regions",
+                    models.CharField(
+                        choices=[
+                            ("locals", "locals"),
+                            ("transit", "transit"),
+                            ("both", "both"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                (
+                    "certificate_of_incorporation",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "directors_id",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "number_of_trucks",
+                    models.CharField(
+                        help_text="truck types + quantity", max_length=200
+                    ),
+                ),
+                ("number_of_drivers", models.PositiveIntegerField()),
+                (
+                    "goods_in_transit_insurance",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "tax_compliance_certificate",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "ntsa_inspection_certificates",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "icdn_or_port_passes",
+                    models.FileField(
+                        blank=True,
+                        null=True,
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "cross_boarder_operation",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "company_director",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
-            managers=[
-                ('active_objects', django.db.models.manager.Manager()),
-            ],
+            options={"abstract": False},
+            managers=[("active_objects", django.db.models.manager.Manager())],
         ),
         migrations.CreateModel(
-            name='PersonOfContact',
+            name="PersonOfContact",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('name', models.CharField(max_length=100)),
-                ('email', models.EmailField(max_length=254)),
-                ('phone', models.CharField(max_length=20)),
-                ('company', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='companies.TransporterCompany')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("name", models.CharField(max_length=100)),
+                ("email", models.EmailField(max_length=254)),
+                ("phone", models.CharField(max_length=20)),
+                (
+                    "company",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="companies.TransporterCompany",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='CargoOwnerCompany',
+            name="CargoOwnerCompany",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('business_name', models.CharField(max_length=20)),
-                ('business_type', models.CharField(choices=[('single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')], max_length=200)),
-                ('account_number', models.CharField(max_length=50)),
-                ('prefered_currency', models.CharField(max_length=200)),
-                ('logo', models.ImageField(upload_to='documents/')),
-                ('business_phone_no', models.CharField(max_length=20, validators=[utils.validators.validate_international_phone_number])),
-                ('business_email', models.EmailField(max_length=254)),
-                ('postal_code', models.CharField(max_length=50, null=True)),
-                ('location', models.CharField(help_text='Street, City, Country', max_length=200)),
-                ('operational_regions', models.CharField(choices=[('locals', 'locals'), ('transit', 'transit'), ('both', 'both')], max_length=30)),
-                ('is_active', models.BooleanField(default=False)),
-                ('certificate_of_incorporation', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('directors_id', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('potential_monthly_tonnage', models.CharField(max_length=200)),
-                ('operational_hours', models.CharField(help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c', max_length=200)),
-                ('company_director', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("business_name", models.CharField(max_length=20)),
+                (
+                    "business_type",
+                    models.CharField(
+                        choices=[
+                            ("single", "single"),
+                            ("Corporate", "Corporate"),
+                            ("others", "others"),
+                        ],
+                        max_length=200,
+                    ),
+                ),
+                ("account_number", models.CharField(max_length=50)),
+                ("prefered_currency", models.CharField(max_length=200)),
+                ("logo", models.ImageField(upload_to="documents/")),
+                (
+                    "business_phone_no",
+                    models.CharField(
+                        max_length=20,
+                        validators=[
+                            utils.validators.validate_international_phone_number
+                        ],
+                    ),
+                ),
+                ("business_email", models.EmailField(max_length=254)),
+                ("postal_code", models.CharField(max_length=50, null=True)),
+                (
+                    "location",
+                    models.CharField(help_text="Street, City, Country", max_length=200),
+                ),
+                (
+                    "operational_regions",
+                    models.CharField(
+                        choices=[
+                            ("locals", "locals"),
+                            ("transit", "transit"),
+                            ("both", "both"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                (
+                    "certificate_of_incorporation",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "directors_id",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                ("potential_monthly_tonnage", models.CharField(max_length=200)),
+                (
+                    "operational_hours",
+                    models.CharField(
+                        help_text="e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c", max_length=200
+                    ),
+                ),
+                (
+                    "company_director",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
-            managers=[
-                ('active_objects', django.db.models.manager.Manager()),
-            ],
+            options={"abstract": False},
+            managers=[("active_objects", django.db.models.manager.Manager())],
         ),
     ]

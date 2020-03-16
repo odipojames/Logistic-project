@@ -5,14 +5,24 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('authentication', '0003_user_employer'),
-    ]
+    dependencies = [("authentication", "0003_user_employer")]
 
     operations = [
         migrations.AlterField(
-            model_name='role',
-            name='title',
-            field=models.CharField(choices=[('transporter_director', 'transporter_director'), ('cargo-owner_director', 'cargo-owner_director'), ('driver', 'driver'), ('admin', 'admin'), ('staff', 'staff'), ('superuser', 'superuser')], help_text="User's role within employer's organization.", max_length=100, unique=True),
-        ),
+            model_name="role",
+            name="title",
+            field=models.CharField(
+                choices=[
+                    ("transporter_director", "transporter_director"),
+                    ("cargo-owner_director", "cargo-owner_director"),
+                    ("driver", "driver"),
+                    ("admin", "admin"),
+                    ("staff", "staff"),
+                    ("superuser", "superuser"),
+                ],
+                help_text="User's role within employer's organization.",
+                max_length=100,
+                unique=True,
+            ),
+        )
     ]

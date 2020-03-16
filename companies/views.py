@@ -7,11 +7,32 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework import generics
 from rest_framework.decorators import api_view
-from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (
+    RetrieveUpdateAPIView,
+    ListAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.parsers import MultiPartParser, FormParser
-from utils.permissions import IsTransporterOrAdmin, IsShyperAdmin, IsAdminOrCompanyOwner, IsCargoOwner, IsComponyAdminOrDirectorOrStaffReadOnly
-from companies.models import TransporterCompany, PersonOfContact, CargoOwnerCompany, TransporterCompany, Company
-from companies.serializers import TransporterSerializer, PersonofContactSerializer, CargoOwnerSerializer, EmployeeSerializer
+from utils.permissions import (
+    IsTransporterOrAdmin,
+    IsShyperAdmin,
+    IsAdminOrCompanyOwner,
+    IsCargoOwner,
+    IsComponyAdminOrDirectorOrStaffReadOnly,
+)
+from companies.models import (
+    TransporterCompany,
+    PersonOfContact,
+    CargoOwnerCompany,
+    TransporterCompany,
+    Company,
+)
+from companies.serializers import (
+    TransporterSerializer,
+    PersonofContactSerializer,
+    CargoOwnerSerializer,
+    EmployeeSerializer,
+)
 from authentication.models import User, Role
 from django.core.mail import send_mail
 from logisticts.settings import EMAIL_HOST_USER
@@ -22,21 +43,21 @@ from utils.helpers import send_sms
 
 class TransporterCompanyListAPIView(generics.ListCreateAPIView):
     """register transporter and its company once"""
+
     queryset = TransporterCompany.objects.all()
     serializer_class = TransporterSerializer
-    renderer_classes = (JsnRenderer, )
+    renderer_classes = (JsnRenderer,)
 
     def list(self, request):
-        permission_classes = (IsShyperAdmin, )
+        permission_classes = (IsShyperAdmin,)
         queryset = self.get_queryset()
-        serialize = self.serializer_class(
-            queryset, many=True)
+        serialize = self.serializer_class(queryset, many=True)
 
         companies = serialize.data
         if len(companies) > 0:
             response = {
                 "Message": "Companies Retrieved Successfully",
-                "Companies": companies
+                "Companies": companies,
             }
         else:
             response = {"Message": "There are no companies for now"}
@@ -45,21 +66,21 @@ class TransporterCompanyListAPIView(generics.ListCreateAPIView):
 
 class CargoOwnerCompanyListAPIView(generics.ListCreateAPIView):
     """register cargo owner and its company once"""
+
     queryset = CargoOwnerCompany.objects.all()
     serializer_class = CargoOwnerSerializer
-    renderer_classes = (JsnRenderer, )
+    renderer_classes = (JsnRenderer,)
 
     def list(self, request):
-        permission_classes = (IsShyperAdmin, )
+        permission_classes = (IsShyperAdmin,)
         queryset = self.get_queryset()
-        serialize_companies = self.serializer_class(
-            queryset, many=True)
+        serialize_companies = self.serializer_class(queryset, many=True)
 
         companies = serialize_companies.data
         if len(companies) > 0:
             response = {
                 "Message": "Companies Retrieved Successfully",
-                "Companies": companies
+                "Companies": companies,
             }
         else:
             response = {"Message": "There are no companies for now"}
@@ -71,9 +92,10 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     Handle retrieving, updating or deletion of cargo owner companies
     Only the Cargo Owner can crud its company
     """
+
     serializer_class = CargoOwnerSerializer
-    renderer_classes = (JsnRenderer, )
-    permission_classes = (IsAdminOrCompanyOwner, )
+    renderer_classes = (JsnRenderer,)
+    permission_classes = (IsAdminOrCompanyOwner,)
 
     def get_queryset(self):
 
@@ -84,7 +106,7 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         serialized_company = self.serializer_class(obj)
         respose = {
             "Message": "Company Successfully Retrieved",
-            "Company": serialized_company.data
+            "Company": serialized_company.data,
         }
 
         return Response(respose, status=status.HTTP_200_OK)
@@ -93,19 +115,18 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         """ Update an existing company """
         obj = self.get_object()
         self.check_object_permissions(request, obj)
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         data_to_update = request.data
-        company = data_to_update.get('company', None)
+        company = data_to_update.get("company", None)
         if company:
-            company.pop('company_director')
-        serializer = self.serializer_class(
-            obj, data=data_to_update, partial=True)
+            company.pop("company_director")
+        serializer = self.serializer_class(obj, data=data_to_update, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         response = {
             "Company": serializer.data,
-            "Message": "Company updated successfully"
+            "Message": "Company updated successfully",
         }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -118,9 +139,7 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         company.company_director.is_active = False
         company.company_director.soft_delete(commit=True)
 
-        response = {
-            "message": "Company deleted successfully"
-        }
+        response = {"message": "Company deleted successfully"}
 
         return Response(response, status=status.HTTP_200_OK)
 
@@ -130,10 +149,11 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     Handle retrieving, updating or deletion of transporter companies
     Only the Transporter can crud its company
     """
+
     serializer_class = TransporterSerializer
-    renderer_classes = (JsnRenderer, )
+    renderer_classes = (JsnRenderer,)
     permission_classes = [IsAuthenticated]
-    permission_classes = (IsAdminOrCompanyOwner, )
+    permission_classes = (IsAdminOrCompanyOwner,)
 
     def get_queryset(self):
         user = self.request.user
@@ -143,10 +163,10 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, pk):
         company = self.get_object()
-        serialize = self.serializer_class(company,)
+        serialize = self.serializer_class(company)
         respose = {
             "Message": "Company Successfully Retrieved",
-            "Company": serialize.data
+            "Company": serialize.data,
         }
 
         return Response(respose, status=status.HTTP_200_OK)
@@ -155,19 +175,18 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         """ Update an existing company """
         obj = self.get_object()
         self.check_object_permissions(request, obj)
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         data_to_update = request.data
-        company = data_to_update.get('company', None)
+        company = data_to_update.get("company", None)
         if company:
-            company.pop('company_director', None)
-        serializer = self.serializer_class(
-            obj, data=data_to_update, partial=True)
+            company.pop("company_director", None)
+        serializer = self.serializer_class(obj, data=data_to_update, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         response = {
             "Company": serializer.data,
-            "Message": "Company updated successfully"
+            "Message": "Company updated successfully",
         }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -180,9 +199,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         company.company_director.is_active = False
         company.company_director.soft_delete(commit=True)
 
-        response = {
-            "message": "Company deleted successfully"
-        }
+        response = {"message": "Company deleted successfully"}
 
         return Response(response, status=status.HTTP_200_OK)
 
@@ -197,22 +214,20 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        cargo_owner = CargoOwnerCompany.active_objects.get(
-            company_director=user).pk
-        if user.is_authenticated and str(user.role) == 'superuser':
+        cargo_owner = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        if user.is_authenticated and str(user.role) == "superuser":
             return PersonOfContact.objects.all()
         return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     def create(self, request, *args, **kwargs):
-        company = CargoOwnerCompany.active_objects.get(
-            company_director=request.user).pk
+        company = CargoOwnerCompany.active_objects.get(company_director=request.user).pk
         data = request.data.copy()
-        data['company'] = company
+        data["company"] = company
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {
-            'Person of Contact': dict(serializer.data),
+            "Person of Contact": dict(serializer.data),
             "message": "Person of Contact has been created successfully",
         }
         return Response(response, status=status.HTTP_201_CREATED)
@@ -222,17 +237,19 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         serializer = self.get_serializer(queryset, many=True)
         response = {
             "Persons of contact": serializer.data,
-            "Message": "Successfully returned your persons of contact"
+            "Message": "Successfully returned your persons of contact",
         }
         return Response(response, status=status.HTTP_200_OK)
 
 
-class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+class PersonOfContactRetrieveUpdateDestroyAPIView(
+    generics.RetrieveUpdateDestroyAPIView
+):
     serializer_class = PersonofContactSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin, IsAuthenticated)
 
     def get_parsers(self):
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return []
 
         return super().get_parsers()
@@ -245,7 +262,7 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
         user = self.request.user
         company = Company.active_objects.get(company_director=user)
         cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
-        if user.is_authenticated and str(user.role) == 'superuser':
+        if user.is_authenticated and str(user.role) == "superuser":
             return PersonOfContact.objects.all()
         return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
@@ -261,42 +278,44 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
 
     # updating a single person of contact
     def put(self, request, pk):
-        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         data = request.data
-        data.pop('company', None)
+        data.pop("company", None)
         serializer = self.serializer_class(obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {
             "Message": "Person of contact updated successfully",
-            "Person of Conact": serializer.data
+            "Person of Conact": serializer.data,
         }
         return Response(response, status=status.HTTP_200_OK)
 
     # self delete a person of contact
     def delete(self, request, pk):
-        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         obj.soft_delete(commit=True)
-        response = {
-            "Message": "Person of contact has been successfully deleted"}
+        response = {"Message": "Person of contact has been successfully deleted"}
         return Response(response, status=status.HTTP_200_OK)
 
 
 class EmployeeListCreateAPIView(generics.ListCreateAPIView):
     """create company employer"""
+
     serializer_class = EmployeeSerializer
-    renderer_classes = (JsnRenderer, )
-    permission_classes = (
-        IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
+    renderer_classes = (JsnRenderer,)
+    permission_classes = (IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
         user = self.request.user
-        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+        if (
+            str(user.role) == "transporter-director"
+            or str(user.role) == "cargo-owner-director"
+        ):
             company = Company.objects.get(company_director=user)
             return company.employees.filter(is_deleted=False)
-        if str(user.role) == 'admin' or str(user.role) == 'staff':
+        if str(user.role) == "admin" or str(user.role) == "staff":
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
@@ -312,16 +331,20 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
         data = request.data.copy()
         if str(user.role) == "admin":
             company = user.employer
-            data['employer'] = company.pk
-        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+            data["employer"] = company.pk
+        if (
+            str(user.role) == "transporter-director"
+            or str(user.role) == "cargo-owner-director"
+        ):
             company = Company.objects.get(company_director=user)
-            data['employer'] = company.pk
+            data["employer"] = company.pk
         password = BaseUserManager().make_random_password(
-            10)  # generate random password for the user
-        data['password'] = password
-        email = data['email']
-        phone = data['phone']
-        company = Company.objects.get(id=data['employer'])
+            10
+        )  # generate random password for the user
+        data["password"] = password
+        email = data["email"]
+        phone = data["phone"]
+        company = Company.objects.get(id=data["employer"])
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -331,33 +354,36 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
         recipient_list = [email]
 
         # sends authentication credentials to employee's email
-        send_mail(subject, message, from_email,
-                  recipient_list, fail_silently=False)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
         # sms notifications
         send_sms(
-            message=f"Your  account for {company} has been created . Login credentials are \n Your email is : {email} \n password: {password}", recipients=[phone])
+            message=f"Your  account for {company} has been created . Login credentials are \n Your email is : {email} \n password: {password}",
+            recipients=[phone],
+        )
         response = {
             "message": "employee added succesfully",
-            "employee": serializer.data
-
+            "employee": serializer.data,
         }
         return Response(response, status.HTTP_201_CREATED)
 
 
 class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     """singl employes retrival updates and destroy"""
+
     serializer_class = EmployeeSerializer
-    renderer_classes = (JsnRenderer, )
-    permission_classes = (
-        IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
+    renderer_classes = (JsnRenderer,)
+    permission_classes = (IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
         user = self.request.user
-        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+        if (
+            str(user.role) == "transporter-director"
+            or str(user.role) == "cargo-owner-director"
+        ):
             company = Company.objects.get(company_director=user)
             return company.employees.filter(is_deleted=False)
 
-        if str(user.role) == 'admin' or str(user.role) == 'staff':
+        if str(user.role) == "admin" or str(user.role) == "staff":
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
@@ -370,10 +396,10 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
 
     def retrieve(self, request, pk):
         employee = self.get_object()
-        serializer = self.serializer_class(employee,)
+        serializer = self.serializer_class(employee)
         response = {
             "message": "employee succesfully retrieved ",
-            "employee": serializer.data
+            "employee": serializer.data,
         }
         return Response(response, status.HTTP_200_OK)
 
@@ -381,34 +407,46 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
     def update(self, request, **kwargs):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         data = request.data
-        data.pop('employer', None)
-        data.pop('password', None)
-        serializer = self.serializer_class(
-            obj, data, partial=True)
+        data.pop("employer", None)
+        data.pop("password", None)
+        serializer = self.serializer_class(obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         # suspending employee
-        suspend = data.get('suspend')
+        suspend = data.get("suspend")
         if suspend:
-            if suspend.lower() == 'true':
+            if suspend.lower() == "true":
                 obj.is_active = False
-                send_mail(subject="Shyper Account suspension", message="your account has been suspended", from_email=EMAIL_HOST_USER,
-                          recipient_list=[obj.email], fail_silently=False)
-                send_sms(message="your shypper account has been suspended",
-                         recipients=[obj.phone])
-            if suspend.lower() == 'false':
-                obj.is_active = True
-                send_mail(subject="Shyper Account reactivation", message="your account suspension has been uplifted", from_email=EMAIL_HOST_USER,
-                          recipient_list=[obj.email], fail_silently=False)
+                send_mail(
+                    subject="Shyper Account suspension",
+                    message="your account has been suspended",
+                    from_email=EMAIL_HOST_USER,
+                    recipient_list=[obj.email],
+                    fail_silently=False,
+                )
                 send_sms(
-                    message="your shypper account has been reactivated", recipients=[obj.phone])
+                    message="your shypper account has been suspended",
+                    recipients=[obj.phone],
+                )
+            if suspend.lower() == "false":
+                obj.is_active = True
+                send_mail(
+                    subject="Shyper Account reactivation",
+                    message="your account suspension has been uplifted",
+                    from_email=EMAIL_HOST_USER,
+                    recipient_list=[obj.email],
+                    fail_silently=False,
+                )
+                send_sms(
+                    message="your shypper account has been reactivated",
+                    recipients=[obj.phone],
+                )
             obj.save()
         response = {
             "message": "employee data succesfully updated",
-            "employee": serializer.data
-
+            "employee": serializer.data,
         }
         return Response(response, status.HTTP_200_OK)
 

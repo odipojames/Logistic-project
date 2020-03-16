@@ -24,8 +24,7 @@ def validate_international_phone_number(phone):
     match = re.search(regex_pattern, phone)
 
     if not match:
-        raise ValidationError(
-            ["please enter correct international phone number."])
+        raise ValidationError(["please enter correct international phone number."])
     return phone
 
 
@@ -40,17 +39,19 @@ def validate_start_date_is_before_end_date(start_date, end_date):
 
 
 def validate_file_extension(value):
-    '''validate file uploads'''
+    """validate file uploads"""
     ext = os.path.splitext(value.name)[1]  # [0] returns path+filename
-    valid_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.png']
+    valid_extensions = [".pdf", ".doc", ".docx", ".jpg", ".png"]
     if not ext.lower() in valid_extensions:
-        raise ValidationError(u'Unsupported file extension.')
+        raise ValidationError("Unsupported file extension.")
 
 
 def validate_passed_file_extension(extension):
     """returns a validator for the passed extension"""
+
     def validator(value):
-        ext = value.name.split('.')[-1]
+        ext = value.name.split(".")[-1]
         if not ext.lower() == extension:
-            raise ValidationError(f'This is not a {extension} file.')
+            raise ValidationError(f"This is not a {extension} file.")
+
     return validator

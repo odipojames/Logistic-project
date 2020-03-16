@@ -9,44 +9,93 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('companies', '0001_initial'),
-    ]
+    dependencies = [("companies", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='Truck',
+            name="Truck",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('name', models.CharField(max_length=200)),
-                ('reg_no', models.CharField(max_length=20)),
-                ('tracking', models.BooleanField(default=False)),
-                ('type', models.CharField(choices=[('flatbed', 'flatbed'), ('double diff', 'double diff'), ('skeleton', 'skeleton')], max_length=200)),
-                ('truck_log_books', models.FileField(upload_to='documents/', validators=[utils.validators.validate_file_extension])),
-                ('owned_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='companies.TransporterCompany')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("name", models.CharField(max_length=200)),
+                ("reg_no", models.CharField(max_length=20)),
+                ("tracking", models.BooleanField(default=False)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("flatbed", "flatbed"),
+                            ("double diff", "double diff"),
+                            ("skeleton", "skeleton"),
+                        ],
+                        max_length=200,
+                    ),
+                ),
+                (
+                    "truck_log_books",
+                    models.FileField(
+                        upload_to="documents/",
+                        validators=[utils.validators.validate_file_extension],
+                    ),
+                ),
+                (
+                    "owned_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="companies.TransporterCompany",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='Trailer',
+            name="Trailer",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('name', models.CharField(max_length=200)),
-                ('reg_no', models.CharField(max_length=20)),
-                ('tracking', models.BooleanField(default=False)),
-                ('type', models.CharField(choices=[('flatbed', 'flatbed'), ('enclosed', 'enclosed'), ('refregirated', 'refregirated'), ('lowboy', 'lowboy')], max_length=200)),
-                ('owned_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='companies.TransporterCompany')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("name", models.CharField(max_length=200)),
+                ("reg_no", models.CharField(max_length=20)),
+                ("tracking", models.BooleanField(default=False)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("flatbed", "flatbed"),
+                            ("enclosed", "enclosed"),
+                            ("refregirated", "refregirated"),
+                            ("lowboy", "lowboy"),
+                        ],
+                        max_length=200,
+                    ),
+                ),
+                (
+                    "owned_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="companies.TransporterCompany",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

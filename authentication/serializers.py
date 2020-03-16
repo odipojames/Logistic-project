@@ -188,13 +188,7 @@ class TransporterRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            "email",
-            "full_name",
-            "phone",
-            "password",
-            "role",
-        ]
+        fields = ["email", "full_name", "phone", "password", "role"]
 
     def create(self, validated_data):
 
@@ -220,13 +214,7 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            "email",
-            "full_name",
-            "phone",
-            "password",
-            "role",
-        ]
+        fields = ["email", "full_name", "phone", "password", "role"]
 
     def create(self, validated_data):
 
@@ -253,7 +241,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     """user profile serializer"""
 
-    date_of_birth = serializers.DateField(input_formats=["%d-%m-%Y",])
+    date_of_birth = serializers.DateField(input_formats=["%d-%m-%Y"])
     user = UserSerializer(read_only=True)
     person_contact_phone = serializers.CharField(
         validators=[validate_international_phone_number]

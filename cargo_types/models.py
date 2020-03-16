@@ -17,31 +17,52 @@ class CargoTypeManager(models.Manager):
         method to create cargo type
         """
 
-        REQUIRED_ARGS = ('cargo_type',)
+        REQUIRED_ARGS = ("cargo_type",)
 
         enforce_all_required_arguments_are_truthy(
-            {'cargo_type': cargo_type, 'description': description}, REQUIRED_ARGS)
+            {"cargo_type": cargo_type, "description": description}, REQUIRED_ARGS
+        )
 
         cargo_type = self.model(cargo_type=cargo_type, description=description)
         cargo_type.save()
         return cargo_type
 
-    def create_commodity(self, name=None, description=None, created_by=None, cargo_type=None):
+    def create_commodity(
+        self, name=None, description=None, created_by=None, cargo_type=None
+    ):
         """
         method to create  and return commodity
         """
-        REQUIRED_ARGS = ('name', 'description', 'created_by', 'cargo_type')
+        REQUIRED_ARGS = ("name", "description", "created_by", "cargo_type")
         enforce_all_required_arguments_are_truthy(
-            {'name': name, 'description': description, 'created_by': created_by, 'cargo_type': cargo_type}, REQUIRED_ARGS)
+            {
+                "name": name,
+                "description": description,
+                "created_by": created_by,
+                "cargo_type": cargo_type,
+            },
+            REQUIRED_ARGS,
+        )
         commodity = self.model(
-            name=name, description=description, cargo_type=cargo_type, created_by=created_by)
+            name=name,
+            description=description,
+            cargo_type=cargo_type,
+            created_by=created_by,
+        )
         commodity.save()
         return commodity
 
 
 class CargoType(AbstractBaseModel, models.Model):
-    cargo_type = models.CharField(max_length=30, choices=[("Container", "Container"), (
-        'Bagged and Bulk', 'Bagged and Bulk'), ('FMCG', 'Fast-Moving Customer Goods')], unique=True)
+    cargo_type = models.CharField(
+        max_length=30,
+        choices=[
+            ("Container", "Container"),
+            ("Bagged and Bulk", "Bagged and Bulk"),
+            ("FMCG", "Fast-Moving Customer Goods"),
+        ],
+        unique=True,
+    )
     description = models.CharField(max_length=200)
 
     objects = CargoTypeManager()
@@ -64,7 +85,8 @@ class Commodity(AbstractBaseModel, models.Model):
     cargo_type = models.ForeignKey(CargoType, on_delete=models.DO_NOTHING)
     description = models.TextField(max_length=200)
     created_by = models.ForeignKey(
-        'companies.CargoOwnerCompany', on_delete=models.DO_NOTHING)
+        "companies.CargoOwnerCompany", on_delete=models.DO_NOTHING
+    )
 
     objects = CargoTypeManager()
     active_objects = CommodityQuerySet.as_manager()

@@ -6,14 +6,15 @@ import utils.validators
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('companies', '0001_initial'),
-    ]
+    dependencies = [("companies", "0001_initial")]
 
     operations = [
         migrations.AlterField(
-            model_name='personofcontact',
-            name='phone',
-            field=models.CharField(max_length=20, validators=[utils.validators.validate_international_phone_number]),
-        ),
+            model_name="personofcontact",
+            name="phone",
+            field=models.CharField(
+                max_length=20,
+                validators=[utils.validators.validate_international_phone_number],
+            ),
+        )
     ]

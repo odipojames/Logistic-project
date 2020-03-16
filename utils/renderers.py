@@ -3,10 +3,9 @@ from rest_framework.renderers import JSONRenderer
 
 
 class JsnRenderer(JSONRenderer):
-
     @staticmethod
     def read_body(request):
-        '''returns a dict from the body of request'''
+        """returns a dict from the body of request"""
 
         data = dict()
 

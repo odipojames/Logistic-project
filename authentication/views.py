@@ -7,7 +7,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.shortcuts import get_object_or_404
 
-from authentication.serializers import LoginSerializer, RegistrationSerializer, UserUpdateSerializer, ProfileSerializer
+from authentication.serializers import (
+    LoginSerializer,
+    RegistrationSerializer,
+    UserUpdateSerializer,
+    ProfileSerializer,
+)
 from utils.renderers import JsnRenderer
 from authentication.models import Profile
 from utils.permissions import IsOwnerOrAdmin
@@ -15,14 +20,16 @@ from companies.models import Company, CargoOwnerCompany, TransporterCompany
 
 
 class RegistrationAPIView(generics.CreateAPIView):
-    renderer_classes = (JsnRenderer, )
+    renderer_classes = (JsnRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
 
         payload = response.data.copy()
-        payload["message"] = "Account created successfully. Please confirm from your email."
+        payload[
+            "message"
+        ] = "Account created successfully. Please confirm from your email."
 
         return Response(payload, status=status.HTTP_201_CREATED)
 
@@ -53,7 +60,7 @@ class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        serializer_data = request.data.get('user', {})
+        serializer_data = request.data.get("user", {})
 
         # Here is that serialize, validate, save pattern we talked about
         # before.
@@ -66,7 +73,7 @@ class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     """
@@ -82,24 +89,32 @@ def logout_view(request):
         refresh_token_instance = RefreshToken(refresh_token)
         refresh_token_instance.blacklist()
 
-        next_url = request.query_params.get(
-            "next") if request.query_params.get("next") else ""
+        next_url = (
+            request.query_params.get("next") if request.query_params.get("next") else ""
+        )
 
         response = {
-            "data": {"message": "You have been succesfully logged out", "next_url": next_url, }
+            "data": {
+                "message": "You have been succesfully logged out",
+                "next_url": next_url,
+            }
         }
 
         return Response(response, status=status.HTTP_200_OK)
 
     except TokenError:
-        return Response({"detail": "You are already logged out."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "You are already logged out."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class ListProfileAPIView(generics.ListAPIView):
     """list user profiles """
+
     renderer_classes = (JsnRenderer,)
     serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated, IsOwnerOrAdmin,)
+    permission_classes = (IsAuthenticated, IsOwnerOrAdmin)
 
     def get_queryset(self):
         user = self.request.user
@@ -107,20 +122,24 @@ class ListProfileAPIView(generics.ListAPIView):
         if user.is_superuser:
             return Profile.objects.all()
 
-        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+        if (
+            str(user.role) == "transporter-director"
+            or str(user.role) == "cargo-owner-director"
+        ):
             company = Company.objects.get(company_director=user)
             return Profile.objects.filter(user__employer=company)
 
-        if str(user.role) == 'admin' or str(user.role) == 'staff':
+        if str(user.role) == "admin" or str(user.role) == "staff":
             company = user.employer
             return Profile.objects.filter(user__employer=company)
 
 
 class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
     """user profile update api """
+
     renderer_classes = (JsnRenderer,)
     serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated, IsOwnerOrAdmin,)
+    permission_classes = (IsAuthenticated, IsOwnerOrAdmin)
 
     def get_queryset(self):
         user = self.request.user
@@ -128,20 +147,23 @@ class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
         if user.is_superuser:
             return Profile.objects.all()
 
-        if str(user.role) == 'transporter-director' or str(user.role) == 'cargo-owner-director':
+        if (
+            str(user.role) == "transporter-director"
+            or str(user.role) == "cargo-owner-director"
+        ):
             company = Company.objects.get(company_director=user)
             return Profile.objects.filter(user__employer=company)
 
-        if str(user.role) == 'admin' or str(user.role) == 'staff':
+        if str(user.role) == "admin" or str(user.role) == "staff":
             company = user.employer
             return Profile.objects.filter(user__employer=company)
 
     def retrieve(self, request, pk):
         profile = self.get_object()
-        serializer = self.serializer_class(profile,)
+        serializer = self.serializer_class(profile)
         response = {
             "message": "profile retrieved succesfully",
-            "profile": serializer.data
+            "profile": serializer.data,
         }
         return Response(response, status.HTTP_200_OK)
 
@@ -149,16 +171,14 @@ class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
 
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         data = request.data
-        data.pop('user')
-        serializer = self.serializer_class(
-            obj, data, partial=True)
+        data.pop("user")
+        serializer = self.serializer_class(obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {
             "message": "profile info succesfully updated",
-            "profile": serializer.data
-
+            "profile": serializer.data,
         }
         return Response(response, status.HTTP_200_OK)

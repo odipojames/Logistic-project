@@ -26,14 +26,35 @@ class OrderManager(models.Manager):
 
         if origin and (not isinstance(origin, list) and not isinstance(origin, tuple)):
             raise ValidationError(
-                {"origin": "Could not save origin. Please pass a list or tuple containing one or more depot instances for origin."})
+                {
+                    "origin": "Could not save origin. Please pass a list or tuple containing one or more depot instances for origin."
+                }
+            )
 
-        if destination and (not isinstance(destination, list) and not isinstance(destination, tuple)):
+        if destination and (
+            not isinstance(destination, list) and not isinstance(destination, tuple)
+        ):
             raise ValidationError(
-                {"destination": "Could not save destination. Please pass a list or tuple containing one or more depot instances for destination."})
+                {
+                    "destination": "Could not save destination. Please pass a list or tuple containing one or more depot instances for destination."
+                }
+            )
 
-        REQUIRED_ARGS = ("title", "description", "commodity", "cargo_tonnage", "loading_point_contact", "loading_point_contact",
-                         "offloading_point_contact", "offloading_point_contact", "desired_rates", "desired_truck_type", "owner", "origin", "destination")
+        REQUIRED_ARGS = (
+            "title",
+            "description",
+            "commodity",
+            "cargo_tonnage",
+            "loading_point_contact",
+            "loading_point_contact",
+            "offloading_point_contact",
+            "offloading_point_contact",
+            "desired_rates",
+            "desired_truck_type",
+            "owner",
+            "origin",
+            "destination",
+        )
 
         enforce_all_required_arguments_are_truthy(kwargs, REQUIRED_ARGS)
 
@@ -67,11 +88,7 @@ class Order(AbstractBaseModel, models.Model):
     """
 
     # TODO ensure these choices are correct.
-    STATUS_CHOICES = [
-        ("PD", "Pending"),
-        ("AS", "Assigned"),
-        ("AO", "Accepted")
-    ]
+    STATUS_CHOICES = [("PD", "Pending"), ("AS", "Assigned"), ("AO", "Accepted")]
 
     ORDER_TYPES = [
         ("SO-SD", "Single Origin To Single Destination"),
@@ -82,31 +99,39 @@ class Order(AbstractBaseModel, models.Model):
 
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=1000)
-    commodity = models.ForeignKey(
-        "cargo_types.Commodity", on_delete=models.CASCADE)
+    commodity = models.ForeignKey("cargo_types.Commodity", on_delete=models.CASCADE)
     cargo_tonnage = models.DecimalField(
-        max_digits=12, decimal_places=4, blank=True, null=True)
+        max_digits=12, decimal_places=4, blank=True, null=True
+    )
     origin = models.ManyToManyField(
-        "depots.Depot", blank=True, related_name="sent_orders")
+        "depots.Depot", blank=True, related_name="sent_orders"
+    )
     destination = models.ManyToManyField(
-        "depots.Depot", blank=True, related_name="received_orders")
+        "depots.Depot", blank=True, related_name="received_orders"
+    )
     loading_point_contact = models.ForeignKey(
-        "companies.PersonOfContact", on_delete=models.CASCADE, related_name='loading_orders')
+        "companies.PersonOfContact",
+        on_delete=models.CASCADE,
+        related_name="loading_orders",
+    )
     offloading_point_contact = models.ForeignKey(
-        "companies.PersonOfContact", on_delete=models.CASCADE, related_name='offloading_orders')
-    status = models.CharField(
-        max_length=2, choices=STATUS_CHOICES, default="PD")
-    desired_rates = models.ForeignKey('rates.Rate', on_delete=models.CASCADE)
+        "companies.PersonOfContact",
+        on_delete=models.CASCADE,
+        related_name="offloading_orders",
+    )
+    status = models.CharField(max_length=2, choices=STATUS_CHOICES, default="PD")
+    desired_rates = models.ForeignKey("rates.Rate", on_delete=models.CASCADE)
     recurring_order = models.BooleanField(default=False)
-    order_type = models.CharField(
-        max_length=5, choices=ORDER_TYPES, default="SO-SD")
+    order_type = models.CharField(max_length=5, choices=ORDER_TYPES, default="SO-SD")
     desired_truck_type = models.CharField(max_length=50)
     owner = models.ForeignKey(
-        'companies.CargoOwnerCompany', on_delete=models.CASCADE, related_name="orders")
+        "companies.CargoOwnerCompany", on_delete=models.CASCADE, related_name="orders"
+    )
     assigned = models.BooleanField(default=False)
     # Added this just so we can track the order without using the auto-incrementing pk
     tracking_id = models.UUIDField(
-        default=uuid.uuid4, blank=True, editable=False, unique=True, db_index=True)
+        default=uuid.uuid4, blank=True, editable=False, unique=True, db_index=True
+    )
 
     objects = OrderManager()
     active_objects = OrderQuerySet.as_manager()
@@ -120,7 +145,9 @@ class CargoOwnerInvoiceManager(models.Manager):
     Manager class for CargoOwnerInvoice model.
     """
 
-    def create_cargo_owner_invoice(self, order=None, number_of_trips=None, description=None, charges=None):
+    def create_cargo_owner_invoice(
+        self, order=None, number_of_trips=None, description=None, charges=None
+    ):
         """
         Create an invoice for a cargo owner.
         """
@@ -128,10 +155,21 @@ class CargoOwnerInvoiceManager(models.Manager):
         REQUIRED_ARGS = ("order", "number_of_trips", "description", "charges")
 
         enforce_all_required_arguments_are_truthy(
-            {"order": order, "number_of_trips": number_of_trips, "description": description, "charges": charges}, REQUIRED_ARGS)
+            {
+                "order": order,
+                "number_of_trips": number_of_trips,
+                "description": description,
+                "charges": charges,
+            },
+            REQUIRED_ARGS,
+        )
 
-        invoice = self.model(order=order, number_of_trips=number_of_trips,
-                             description=description, charges=charges)
+        invoice = self.model(
+            order=order,
+            number_of_trips=number_of_trips,
+            description=description,
+            charges=charges,
+        )
 
         invoice.clean()
         invoice.save()
@@ -144,8 +182,7 @@ class CargoOwnerInvoice(AbstractBaseModel, models.Model):
     This represents invoices sent to Cargo Owners.
     """
 
-    order = models.ForeignKey(
-        Order, to_field="tracking_id", on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, to_field="tracking_id", on_delete=models.CASCADE)
     number_of_trips = models.IntegerField()
     description = models.CharField(max_length=1000)
     charges = HStoreField()

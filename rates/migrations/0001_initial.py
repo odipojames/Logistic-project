@@ -9,24 +9,39 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('companies', '0001_initial'),
-    ]
+    dependencies = [("companies", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='Rate',
+            name="Rate",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('type', django.contrib.postgres.fields.hstore.HStoreField()),
-                ('prefered_currency', models.CharField(choices=[('USD', 'USD'), ('KES', 'KES')], max_length=20)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='companies.CargoOwnerCompany')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("type", django.contrib.postgres.fields.hstore.HStoreField()),
+                (
+                    "prefered_currency",
+                    models.CharField(
+                        choices=[("USD", "USD"), ("KES", "KES")], max_length=20
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="companies.CargoOwnerCompany",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
-        ),
+            options={"abstract": False},
+        )
     ]

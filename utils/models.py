@@ -5,6 +5,7 @@ from django.db import models
 
 # Create your models here.
 
+
 class AbstractBaseModel(models.Model):
     """
     This abstract model contains fields that should be contained in each model. Soft delete is also implemented in this model.
@@ -34,19 +35,19 @@ class AbstractBaseModel(models.Model):
         if commit:
             self.save()
 
-    
     class Meta:
         abstract = True
+
 
 class ActiveObjectsQuerySet(models.QuerySet):
     """
     This custom queryset filters results further and only returns objects
     that have not been soft deleted:
         ie, objects.all().filter(is_deleted=False)
-    
+
     Because it returns a QuerySet, it can be filtered further as needed also.
         eg objects.all().filter(is_deleted=False).filter(is_active=True), etc
-    
+
     https://docs.djangoproject.com/en/2.2/ref/models/querysets/
     """
 

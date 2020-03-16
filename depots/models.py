@@ -13,31 +13,52 @@ class DepotManager(models.Manager):
     Manager to handle methods of the Depot model.
     """
 
-    def create_depot(self, city=None, address=None, street=None, state=None, coordinates=None, user=None,is_public=None):
+    def create_depot(
+        self,
+        city=None,
+        address=None,
+        street=None,
+        state=None,
+        coordinates=None,
+        user=None,
+        is_public=None,
+    ):
         """
         Method to create and return depot instances.
         """
 
         REQUIRED_ARGS = ("coordinates", "user")
 
-        enforce_all_required_arguments_are_truthy({"coordinates": coordinates, "user": user}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy(
+            {"coordinates": coordinates, "user": user}, REQUIRED_ARGS
+        )
 
         if not isinstance(user, get_user_model()):
             raise ValidationError({"user": "Provide a valid user instance for user."})
 
-
-        depot = self.model(city=city, address=address, street=street, state=state, coordinates=coordinates, user=user,is_public=is_public)
+        depot = self.model(
+            city=city,
+            address=address,
+            street=street,
+            state=state,
+            coordinates=coordinates,
+            user=user,
+            is_public=is_public,
+        )
 
         depot.clean()
         depot.save()
         return depot
 
+
 class DepotQuerySet(ActiveObjectsQuerySet):
     """queryset to handle depot model"""
-    def get_depot(self,user=None):
+
+    def get_depot(self, user=None):
         """return only depots created by a particular cargo owner and all public ones"""
         return self._active().filter(user=user)
-    def get_public(self,is_public=None):
+
+    def get_public(self, is_public=None):
         """return public depots"""
         return self._active().filter(is_public=True)
 
@@ -47,7 +68,9 @@ class Depot(AbstractBaseModel, models.Model):
     This defines the data about a specific depot.
     """
 
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="Depots")
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="Depots"
+    )
     city = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=50, null=True, blank=True)
     street = models.CharField(max_length=50, null=True, blank=True)
@@ -76,8 +99,10 @@ class Depot(AbstractBaseModel, models.Model):
                 raise ValidationError({key: f"{key} cannot be empty."})
 
         # remove any unnecessary keys being passed here
-        self.coordinates = {"lattitude": self.coordinates.get("lattitude"),
-        "longitude": self.coordinates.get("longitude")}
+        self.coordinates = {
+            "lattitude": self.coordinates.get("lattitude"),
+            "longitude": self.coordinates.get("longitude"),
+        }
 
         return super().clean()
 

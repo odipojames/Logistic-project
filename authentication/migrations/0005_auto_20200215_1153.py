@@ -7,23 +7,55 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('authentication', '0004_auto_20200207_1824'),
-    ]
+    dependencies = [("authentication", "0004_auto_20200207_1824")]
 
     operations = [
         migrations.AlterField(
-            model_name='role',
-            name='title',
-            field=models.CharField(choices=[('transporter-director', 'transporter-director'), ('cargo-owner-director', 'cargo-owner-director'), ('driver', 'driver'), ('admin', 'admin'), ('staff', 'staff'), ('superuser', 'superuser')], help_text="User's role within employer's organization.", max_length=100, unique=True),
+            model_name="role",
+            name="title",
+            field=models.CharField(
+                choices=[
+                    ("transporter-director", "transporter-director"),
+                    ("cargo-owner-director", "cargo-owner-director"),
+                    ("driver", "driver"),
+                    ("admin", "admin"),
+                    ("staff", "staff"),
+                    ("superuser", "superuser"),
+                ],
+                help_text="User's role within employer's organization.",
+                max_length=100,
+                unique=True,
+            ),
         ),
         migrations.CreateModel(
-            name='Profile',
+            name="Profile",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('profile_picture', models.ImageField(blank=True, default='staticfiles/images/profile.jpg', upload_to='documents/profile/')),
-                ('biography', models.TextField(blank=True, max_length=200, null=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='user_profile', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "profile_picture",
+                    models.ImageField(
+                        blank=True,
+                        default="staticfiles/images/profile.jpg",
+                        upload_to="documents/profile/",
+                    ),
+                ),
+                ("biography", models.TextField(blank=True, max_length=200, null=True)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="user_profile",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]
