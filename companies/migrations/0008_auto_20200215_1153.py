@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('companies', '0007_auto_20200205_1843'),
-    ]
+    dependencies = [("companies", "0007_auto_20200205_1843")]
 
     operations = [
         migrations.AlterField(
-            model_name='company',
-            name='is_shypper',
+            model_name="company",
+            name="is_shypper",
             field=models.BooleanField(default=False),
-        ),
+        )
     ]

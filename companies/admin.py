@@ -1,8 +1,11 @@
 from django.contrib import admin
-from .models import TransporterCompany,CargoOwnerCompany, PersonOfContact,Company,Shypper
-
-
-
+from .models import (
+    TransporterCompany,
+    CargoOwnerCompany,
+    PersonOfContact,
+    Company,
+    Shypper,
+)
 
 
 admin.site.register(CargoOwnerCompany)

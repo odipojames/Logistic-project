@@ -1,7 +1,7 @@
-from django.urls import path 
+from django.urls import path
 from rates.views import ListRates, RetrieveUpdateDeleteRates
 
 urlpatterns = [
-    path('', ListRates.as_view(), name='create-rates'),
-    path('<int:pk>/', RetrieveUpdateDeleteRates.as_view(), name='update_list'),
+    path("", ListRates.as_view(), name="create-rates"),
+    path("<int:pk>/", RetrieveUpdateDeleteRates.as_view(), name="update_list"),
 ]

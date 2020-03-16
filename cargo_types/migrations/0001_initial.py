@@ -8,39 +8,72 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('companies', '0001_initial'),
-    ]
+    dependencies = [("companies", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='CargoType',
+            name="CargoType",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('cargo_type', models.CharField(choices=[('Container', 'Container'), ('Bagged and Bulk', 'Bagged and Bulk'), ('FMCG', 'Fast-Moving Customer Goods')], max_length=30, unique=True)),
-                ('description', models.CharField(max_length=200)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                (
+                    "cargo_type",
+                    models.CharField(
+                        choices=[
+                            ("Container", "Container"),
+                            ("Bagged and Bulk", "Bagged and Bulk"),
+                            ("FMCG", "Fast-Moving Customer Goods"),
+                        ],
+                        max_length=30,
+                        unique=True,
+                    ),
+                ),
+                ("description", models.CharField(max_length=200)),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='Commodity',
+            name="Commodity",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('name', models.CharField(max_length=200)),
-                ('description', models.TextField(max_length=200)),
-                ('cargo_type', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='cargo_types.CargoType')),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='companies.CargoOwnerCompany')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("name", models.CharField(max_length=200)),
+                ("description", models.TextField(max_length=200)),
+                (
+                    "cargo_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        to="cargo_types.CargoType",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        to="companies.CargoOwnerCompany",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

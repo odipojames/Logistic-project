@@ -10,7 +10,6 @@ from .serializers import DriverSerializer, DriverRegistrationSerializer
 from utils.helpers import send_sms
 
 
-
 class DriverListCreateView(generics.ListCreateAPIView):
     serializer_class = DriverSerializer
     permission_classes = (IsTransporterOrAdmin,)
@@ -23,25 +22,28 @@ class DriverListCreateView(generics.ListCreateAPIView):
             return Driver.active_objects.all()
 
         if str(user.role) == "transporter":
-            transporter = TransporterCompany.active_objects.get(company_director=self.request.user).pk
+            transporter = TransporterCompany.active_objects.get(
+                company_director=self.request.user
+            ).pk
 
             return Driver.active_objects.for_transporter(company=transporter)
 
     def create(self, request, **kwargs):
-        transporter = TransporterCompany.active_objects.get(company_director=request.user).pk
+        transporter = TransporterCompany.active_objects.get(
+            company_director=request.user
+        ).pk
 
         data = request.data.copy()
-        data['company'] = transporter
+        data["company"] = transporter
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        email = serializer.data.get('user').get('email')
+        email = serializer.data.get("user").get("email")
 
         response = {
             "transporter": dict(serializer.data),
-            "message": f'Driver succesfully created. Login credentials have been sent to {email}'
-
+            "message": f"Driver succesfully created. Login credentials have been sent to {email}",
         }
 
         return Response(response, status=status.HTTP_201_CREATED)
@@ -54,7 +56,7 @@ class DriverDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = DriverSerializer
     permission_classes = (IsTransporterOrAdmin,)
-    lookup_field = 'id'
+    lookup_field = "id"
 
     def get_queryset(self):
         """
@@ -65,7 +67,7 @@ class DriverDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         if user.is_superuser:
             return Driver.active_objects.all()
-        if str(user.role) == 'transporter':
+        if str(user.role) == "transporter":
             company = TransporterCompany.active_objects.get(company_director=user).pk
             return Driver.active_objects.for_transporter(company=company)
 
@@ -79,28 +81,34 @@ class DriverDetailView(generics.RetrieveUpdateDestroyAPIView):
         obj = self.get_object()
         self.check_object_permissions(request, obj)
 
-        kwargs['partial'] = True
+        kwargs["partial"] = True
 
         serializer = self.get_serializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
         # logic for suspending and unsuspending driver.
-        suspend = request.data.get('suspend')
+        suspend = request.data.get("suspend")
 
         if suspend:
-            if suspend.lower() == 'true':
+            if suspend.lower() == "true":
                 obj.user.is_active = False
-                send_sms(message="your shypper account has been suspended",recipients=[obj.user.phone])
-            elif suspend.lower() == 'false':
+                send_sms(
+                    message="your shypper account has been suspended",
+                    recipients=[obj.user.phone],
+                )
+            elif suspend.lower() == "false":
                 obj.user.is_active = True
-                send_sms(message="your shypper account has been reactivated",recipients=[obj.user.phone])
+                send_sms(
+                    message="your shypper account has been reactivated",
+                    recipients=[obj.user.phone],
+                )
             obj.user.save()
 
         message = "Driver succesfully updated."
 
         payload = serializer.data.copy()
-        payload['message'] = message
+        payload["message"] = message
 
         return Response(payload, status=status.HTTP_200_OK)
 

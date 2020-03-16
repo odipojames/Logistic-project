@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
 from authentication.models import User, UserManager
-from utils.validators import validate_file_extension, validate_international_phone_number
+from utils.validators import (
+    validate_file_extension,
+    validate_international_phone_number,
+)
 from cargo_types.models import Commodity
 
 
@@ -16,11 +19,14 @@ class PersonOfContactManager(models.Manager):
     """
 
     def create_person_of_contact(self, company=None, name=None, email=None, phone=None):
-        REQUIRED_ARGS = ('company', 'name', 'phone')
+        REQUIRED_ARGS = ("company", "name", "phone")
         enforce_all_required_arguments_are_truthy(
-            {'company': company, 'name': name, 'email': email, 'phone': phone}, REQUIRED_ARGS)
+            {"company": company, "name": name, "email": email, "phone": phone},
+            REQUIRED_ARGS,
+        )
         person_of_contact = self.model(
-            company=company, name=name, email=email, phone=phone)
+            company=company, name=name, email=email, phone=phone
+        )
         person_of_contact.save()
         return person_of_contact
 
@@ -36,33 +42,43 @@ class PersonOfContactQuerySet(ActiveObjectsQuerySet):
 class BaseCompany(models.Model):
     # business details
     business_name = models.CharField(max_length=20, unique=True)
-    business_type = models.CharField(max_length=200, choices=[(
-        'single', 'single'), ('Corporate', 'Corporate'), ('others', 'others')])
+    business_type = models.CharField(
+        max_length=200,
+        choices=[
+            ("single", "single"),
+            ("Corporate", "Corporate"),
+            ("others", "others"),
+        ],
+    )
     account_number = models.CharField(max_length=50, unique=True)
     prefered_currency = models.CharField(max_length=200)
-    logo = models.ImageField(upload_to='documents/')
-    business_phone_no = models.CharField(max_length=20, validators=[
-                                         validate_international_phone_number], unique=True)
+    logo = models.ImageField(upload_to="documents/")
+    business_phone_no = models.CharField(
+        max_length=20, validators=[validate_international_phone_number], unique=True
+    )
     business_email = models.EmailField(unique=True)
     postal_code = models.CharField(max_length=50, null=True)
-    location = models.CharField(
-        max_length=200, help_text='Street, City, Country')
+    location = models.CharField(max_length=200, help_text="Street, City, Country")
     company_director = models.OneToOneField(User, on_delete=models.CASCADE)
     # operations deatails
-    operational_regions = models.CharField(max_length=30, choices=[(
-        "locals", "locals"), ('transit', 'transit'), ('both', 'both')])
+    operational_regions = models.CharField(
+        max_length=30,
+        choices=[("locals", "locals"), ("transit", "transit"), ("both", "both")],
+    )
     is_active = models.BooleanField(default=False)
     # documents
     certificate_of_incorporation = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
     directors_id = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
 
     objects = models.Manager()
 
     class Meta:
         abstract = True
-        app_label = 'companies'
+        app_label = "companies"
 
 
 class Company(BaseCompany, models.Model):
@@ -79,7 +95,8 @@ class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
     # operations deatails
     potential_monthly_tonnage = models.CharField(max_length=200)
     operational_hours = models.CharField(
-        max_length=200, help_text='e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c')
+        max_length=200, help_text="e.g Mon-Fri: 8-5, Mon-Sun 8-5 e.t.c"
+    )
     company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
     objects = models.Manager()
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -92,19 +109,28 @@ class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
 class TransporterCompany(AbstractBaseModel):
     # operations deatails
     number_of_trucks = models.CharField(
-        max_length=200, help_text='truck types + quantity')
+        max_length=200, help_text="truck types + quantity"
+    )
     number_of_drivers = models.PositiveIntegerField()
     # documents
     goods_in_transit_insurance = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
     tax_compliance_certificate = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
     ntsa_inspection_certificates = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
     icdn_or_port_passes = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension], null=True, blank=True)
+        upload_to="documents/",
+        validators=[validate_file_extension],
+        null=True,
+        blank=True,
+    )
     cross_boarder_operation = models.FileField(
-        upload_to="documents/", validators=[validate_file_extension])
+        upload_to="documents/", validators=[validate_file_extension]
+    )
     company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
@@ -116,12 +142,12 @@ class TransporterCompany(AbstractBaseModel):
 
 
 class PersonOfContact(AbstractBaseModel):
-    company = models.ForeignKey(
-        'companies.CargoOwnerCompany', on_delete=models.CASCADE)
+    company = models.ForeignKey("companies.CargoOwnerCompany", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20, validators=[
-                             validate_international_phone_number], unique=True)
+    phone = models.CharField(
+        max_length=20, validators=[validate_international_phone_number], unique=True
+    )
 
     objects = PersonOfContactManager()
     active_objects = PersonOfContactQuerySet.as_manager()

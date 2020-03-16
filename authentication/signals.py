@@ -17,18 +17,18 @@ def password_reset_token_created(sender, reset_password_token, *args, **kwargs):
     """
     # send an e-mail to the user
     context = {
-        'current_user': reset_password_token.user,
-        'email': reset_password_token.user.email,
-        'reset_password_url': "{}/api/v1/auth/reset-password/confirm/?token={}".format(site_url, reset_password_token.key),
-        'site_name': site_full_name,
-        'site_domain': site_url
+        "current_user": reset_password_token.user,
+        "email": reset_password_token.user.email,
+        "reset_password_url": "{}/api/v1/auth/reset-password/confirm/?token={}".format(
+            site_url, reset_password_token.key
+        ),
+        "site_name": site_full_name,
+        "site_domain": site_url,
     }
 
     # render email text
-    email_html_message = render_to_string(
-        'email/user_reset_password.html', context)
-    email_plaintext_message = render_to_string(
-        'email/user_reset_password.txt', context)
+    email_html_message = render_to_string("email/user_reset_password.html", context)
+    email_plaintext_message = render_to_string("email/user_reset_password.txt", context)
 
     msg = EmailMultiAlternatives(
         # title:
@@ -38,7 +38,7 @@ def password_reset_token_created(sender, reset_password_token, *args, **kwargs):
         # from:
         "noreply@{}".format(site_url),
         # to:
-        [reset_password_token.user.email]
+        [reset_password_token.user.email],
     )
     msg.attach_alternative(email_html_message, "text/html")
     msg.send()

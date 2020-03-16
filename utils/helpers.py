@@ -5,8 +5,9 @@ import io
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-import  africastalking
-from logisticts.settings import  AF_USERNAME, APIKEY
+import africastalking
+from logisticts.settings import AF_USERNAME, APIKEY
+
 
 def enforce_all_required_arguments_are_truthy(kwargs, required_args):
     """
@@ -29,9 +30,9 @@ def enforce_all_required_arguments_are_truthy(kwargs, required_args):
     """
 
     for arg in required_args:
-        if arg not in kwargs.keys(): # arg must be present
+        if arg not in kwargs.keys():  # arg must be present
             raise ValidationError({arg: "This field is required."})
-        elif not kwargs.get(arg): # arg must be truthy
+        elif not kwargs.get(arg):  # arg must be truthy
             raise ValidationError({arg: "This field cannot be empty."})
     return kwargs
 
@@ -56,7 +57,7 @@ def get_errored_integrity_field(exc):
     exc_message = exc.args[0][key_index:]
 
     # the field is between the first pair of brackets after our message.
-    field = exc_message[exc_message.find("(")+1:exc_message.find(")")]
+    field = exc_message[exc_message.find("(") + 1 : exc_message.find(")")]
 
     return field if field else None
 
@@ -71,22 +72,25 @@ def blacklist_user_outstanding_tokens(user_instance):
             refresh_token_instance = RefreshToken(token.token)
             refresh_token_instance.blacklist()
         except TokenError:
-        # a token error is raised if the tokens are already blacklisted. We don't need to do anything in that case.
+            # a token error is raised if the tokens are already blacklisted. We don't need to do anything in that case.
             pass
 
+
 def random_password(self, N=10):
-        random_password = ''.join(random.choices(string.ascii_lowercase +
-                                            string.digits, k=N))
-        return random_password
+    random_password = "".join(
+        random.choices(string.ascii_lowercase + string.digits, k=N)
+    )
+    return random_password
+
 
 def read_csv(csv_file):
     """
     Takes a csv in memory file object and returns an iterable with each csv line
     """
-    data_set = csv_file.read().decode('UTF-8')
+    data_set = csv_file.read().decode("UTF-8")
     io_string = io.StringIO(data_set)
-    next(io_string) #jump header line
-    return csv.reader(io_string, delimiter=',')
+    next(io_string)  # jump header line
+    return csv.reader(io_string, delimiter=",")
 
 
 # Initialize SDK for sending sms
@@ -94,8 +98,9 @@ username = AF_USERNAME
 api_key = APIKEY
 africastalking.initialize(username, api_key)
 
-def send_sms(message,recipients):
+
+def send_sms(message, recipients):
     """send sms notifications"""
     sms = africastalking.SMS
-    sender = 'softsearch'
+    sender = "softsearch"
     return sms.send(message, recipients, sender)

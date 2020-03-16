@@ -5,35 +5,30 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('assets', '0001_initial'),
-    ]
+    dependencies = [("assets", "0001_initial")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='truck',
-            name='truck_log_books',
-        ),
+        migrations.RemoveField(model_name="truck", name="truck_log_books"),
         migrations.AddField(
-            model_name='trailer',
-            name='haulage',
-            field=models.CharField(default='4334', max_length=20),
+            model_name="trailer",
+            name="haulage",
+            field=models.CharField(default="4334", max_length=20),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='truck',
-            name='haulage',
-            field=models.CharField(default='4345', max_length=20),
+            model_name="truck",
+            name="haulage",
+            field=models.CharField(default="4345", max_length=20),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='trailer',
-            name='reg_no',
+            model_name="trailer",
+            name="reg_no",
             field=models.CharField(max_length=20, unique=True),
         ),
         migrations.AlterField(
-            model_name='truck',
-            name='reg_no',
+            model_name="truck",
+            name="reg_no",
             field=models.CharField(max_length=20, unique=True),
         ),
     ]

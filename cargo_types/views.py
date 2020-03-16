@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.renderers import JsnRenderer
-from.serializers import CargoTypeSerializer, CommoditySerializer
+from .serializers import CargoTypeSerializer, CommoditySerializer
 
 # Create your views here.
 
@@ -19,7 +19,8 @@ class CargoTypeList(generics.ListCreateAPIView):
     """
     view to handle cargo type CRUD
     """
-    renderer_classes = (JsnRenderer, )
+
+    renderer_classes = (JsnRenderer,)
     serializer_class = CargoTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
@@ -28,7 +29,7 @@ class CargoTypeList(generics.ListCreateAPIView):
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        if user.is_authenticated and str(user.role) == 'superuser':
+        if user.is_authenticated and str(user.role) == "superuser":
             return CargoType.active_objects.all()
         return CargoType.active_objects.all_objects()
 
@@ -38,7 +39,7 @@ class CargoTypeList(generics.ListCreateAPIView):
         serializers.save()
         response = {
             "cargo types": serializers.data,
-            "message": 'cargo type created succesfully'
+            "message": "cargo type created succesfully",
         }
         return Response(response, status=status.HTTP_201_CREATED)
 
@@ -47,7 +48,8 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """
     class that retrieves update and destroys cargo types
     """
-    renderer_classes = (JsnRenderer, )
+
+    renderer_classes = (JsnRenderer,)
     serializer_class = CargoTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
@@ -56,7 +58,7 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        if user.is_authenticated and str(user.role) == 'superuser':
+        if user.is_authenticated and str(user.role) == "superuser":
             return CargoType.objects.all()
         return CargoType.active_objects.all_objects()
 
@@ -64,10 +66,10 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, pk):
 
         type = self.get_object()
-        serializer = self.serializer_class(type,)
+        serializer = self.serializer_class(type)
         response = {
             "Message": "cargo type details returned successfully",
-            "Cargo-Type_details": serializer.data
+            "Cargo-Type_details": serializer.data,
         }
 
         return Response(response, status=status.HTTP_200_OK)
@@ -77,14 +79,10 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
-        serializer = self.serializer_class(
-            obj, request.data, partial=True)
+        serializer = self.serializer_class(obj, request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        response = {
-            "cargo type": serializer.data,
-            "message": 'updated succesfully'
-        }
+        response = {"cargo type": serializer.data, "message": "updated succesfully"}
         return Response(response)
 
     def delete(self, request, pk):
@@ -93,7 +91,7 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, obj)
 
         obj.soft_delete(commit=True)
-        response = {"message": 'cargo type deleted succesfully!'}
+        response = {"message": "cargo type deleted succesfully!"}
         return Response(response, status.HTTP_200_OK)
 
 
@@ -101,33 +99,34 @@ class CommodityList(generics.ListCreateAPIView):
     """
     view to handle Commodity CRUD
     """
-    renderer_classes = (JsnRenderer, )
+
+    renderer_classes = (JsnRenderer,)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAdminOrCargoOwner, )
+    permission_classes = (IsAdminOrCargoOwner,)
 
     def get_queryset(self):
         """
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(
-            company_director=user).pk
-        if user.is_authenticated and str(user.role) == 'superuser':
+        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        if user.is_authenticated and str(user.role) == "superuser":
             return Commodity.objects.all()
 
         return Commodity.active_objects.get_commodity(created_by=company)
 
     def post(self, request, format=None):
         cargo_owner = CargoOwnerCompany.active_objects.get(
-            company_director=request.user).pk
+            company_director=request.user
+        ).pk
         data = request.data.copy()
-        data['created_by'] = cargo_owner
+        data["created_by"] = cargo_owner
         serializers = self.serializer_class(data=data)
         serializers.is_valid(raise_exception=True)
         serializers.save()
         response = {
             "commodities": serializers.data,
-            "message": 'commodity created succesfully'
+            "message": "commodity created succesfully",
         }
         return Response(response, status=status.HTTP_201_CREATED)
 
@@ -136,18 +135,18 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """
     class that retrieves,updates and destroys commodity
     """
-    renderer_classes = (JsnRenderer, )
+
+    renderer_classes = (JsnRenderer,)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAdminOrCargoOwner, )
+    permission_classes = (IsAdminOrCargoOwner,)
 
     def get_queryset(self):
         """
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(
-            company_director=user).pk
-        if user.is_authenticated and str(user.role) == 'superuser':
+        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        if user.is_authenticated and str(user.role) == "superuser":
             return Commodity.objects.all()
         return Commodity.active_objects.get_commodity(created_by=company)
 
@@ -155,10 +154,10 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, pk):
 
         commodity = self.get_object()
-        serializer = self.serializer_class(commodity,)
+        serializer = self.serializer_class(commodity)
         response = {
             "Message": "commodity details returned successfully",
-            "commodity_details": serializer.data
+            "commodity_details": serializer.data,
         }
 
         return Response(response, status=status.HTTP_200_OK)
@@ -167,14 +166,10 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, pk):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
-        serializer = self.serializer_class(
-            obj, request.data, partial=True)
+        serializer = self.serializer_class(obj, request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        response = {
-            "commodity": serializer.data,
-            "message": 'updated succesfully'
-        }
+        response = {"commodity": serializer.data, "message": "updated succesfully"}
         return Response(response)
 
     # soft deletes a commodity
@@ -182,5 +177,5 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         obj.soft_delete(commit=True)
-        response = {"message": 'commodity  deleted succesfully!'}
+        response = {"message": "commodity  deleted succesfully!"}
         return Response(response, status.HTTP_200_OK)

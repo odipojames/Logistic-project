@@ -16,27 +16,24 @@ class ListCreateOrder(ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and str(user.role) == 'superuser':
+        if user.is_authenticated and str(user.role) == "superuser":
             return Order.active_objects.all()
-        if user.is_authenticated and str(user.role) == 'cargo-owner':
-            cargo_owner = CargoOwnerCompany.objects.get(
-                company_director=user).pk
+        if user.is_authenticated and str(user.role) == "cargo-owner":
+            cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
             return Order.active_objects.get_order(owner=cargo_owner)
 
     def post(self, request, format=None):
         user = self.request.user
         data = request.data.copy()
         cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
-        data['owner'] = cargo_owner
-        context = {
-            "request": request
-        }
+        data["owner"] = cargo_owner
+        context = {"request": request}
         serializer = self.serializer_class(data=data, context=context)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {
-            'order': dict(serializer.data),
-            'message': "Orders successfully created",
+            "order": dict(serializer.data),
+            "message": "Orders successfully created",
         }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -44,15 +41,14 @@ class ListCreateOrder(ListCreateAPIView):
 class RetrieveUpdateDeleteOrder(RetrieveUpdateDestroyAPIView):
     serializer_class = OrderSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin,)
-    multiple_lookup_fields = ['tracking_id']
+    multiple_lookup_fields = ["tracking_id"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and str(user.role) == 'superuser':
+        if user.is_authenticated and str(user.role) == "superuser":
             return Order.active_objects.all()
-        if user.is_authenticated and str(user.role) == 'cargo-owner':
-            cargo_owner = CargoOwnerCompany.objects.get(
-                company_director=user).pk
+        if user.is_authenticated and str(user.role) == "cargo-owner":
+            cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
             return Order.active_objects.get_order(owner=cargo_owner)
 
     def get_object(self):
@@ -70,27 +66,25 @@ class RetrieveUpdateDeleteOrder(RetrieveUpdateDestroyAPIView):
         serializer = self.serializer_class(order)
         response = {
             "Order": serializer.data,
-            "Message": "Order details returned successfully"
+            "Message": "Order details returned successfully",
         }
         return Response(response, status.HTTP_200_OK)
 
     def put(self, request, tracking_id):
         obj = self.get_object()
         data = request.data
-        data.pop('owner', None)
+        data.pop("owner", None)
         serializer = self.serializer_class(obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response = {
             "Order": serializer.data,
-            'Message': "Order has been updated successfully",
+            "Message": "Order has been updated successfully",
         }
         return Response(response, status.HTTP_200_OK)
 
     def delete(self, request, tracking_id):
         obj = self.get_object()
         obj.soft_delete(commit=True)
-        response = {
-            "Message": "Order has been deleted successfully"
-        }
+        response = {"Message": "Order has been deleted successfully"}
         return Response(response, status.HTTP_200_OK)

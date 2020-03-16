@@ -11,67 +11,174 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('depots', '0001_initial'),
-        ('orders', '0001_initial'),
-        ('assets', '0001_initial'),
-        ('companies', '0001_initial'),
+        ("depots", "0001_initial"),
+        ("orders", "0001_initial"),
+        ("assets", "0001_initial"),
+        ("companies", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Trip',
+            name="Trip",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('start_date', models.DateTimeField()),
-                ('end_date', models.DateTimeField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('P', 'Pending'), ('S', 'Started'), ('O', 'Ongoing'), ('D', 'Delivered')], default='P', max_length=1)),
-                ('description', models.CharField(max_length=1000)),
-                ('trip_number', models.IntegerField()),
-                ('tracking_data', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=50), blank=True, size=None)),
-                ('destination', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='trip_destinations', to='depots.Depot')),
-                ('loading_point_contact', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='loading_trips', to='companies.PersonOfContact')),
-                ('offloading_point_contact', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='offloading_trips', to='companies.PersonOfContact')),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='trips', to='orders.Order')),
-                ('origin', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='trip_origins', to='depots.Depot')),
-                ('transporter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='trips', to='companies.TransporterCompany')),
-                ('truck', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='trips', to='assets.Truck')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("start_date", models.DateTimeField()),
+                ("end_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("P", "Pending"),
+                            ("S", "Started"),
+                            ("O", "Ongoing"),
+                            ("D", "Delivered"),
+                        ],
+                        default="P",
+                        max_length=1,
+                    ),
+                ),
+                ("description", models.CharField(max_length=1000)),
+                ("trip_number", models.IntegerField()),
+                (
+                    "tracking_data",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=50),
+                        blank=True,
+                        size=None,
+                    ),
+                ),
+                (
+                    "destination",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="trip_destinations",
+                        to="depots.Depot",
+                    ),
+                ),
+                (
+                    "loading_point_contact",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="loading_trips",
+                        to="companies.PersonOfContact",
+                    ),
+                ),
+                (
+                    "offloading_point_contact",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="offloading_trips",
+                        to="companies.PersonOfContact",
+                    ),
+                ),
+                (
+                    "order",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="trips",
+                        to="orders.Order",
+                    ),
+                ),
+                (
+                    "origin",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="trip_origins",
+                        to="depots.Depot",
+                    ),
+                ),
+                (
+                    "transporter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="trips",
+                        to="companies.TransporterCompany",
+                    ),
+                ),
+                (
+                    "truck",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="trips",
+                        to="assets.Truck",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='TripInvoice',
+            name="TripInvoice",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('charges', django.contrib.postgres.fields.hstore.HStoreField()),
-                ('description', models.CharField(max_length=1000)),
-                ('trip', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='invoice', to='trips.Trip')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("charges", django.contrib.postgres.fields.hstore.HStoreField()),
+                ("description", models.CharField(max_length=1000)),
+                (
+                    "trip",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="invoice",
+                        to="trips.Trip",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='Rating',
+            name="Rating",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('body', models.CharField(max_length=1000)),
-                ('points', models.IntegerField()),
-                ('reviewer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ratings', to='companies.CargoOwnerCompany')),
-                ('trip', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ratings', to='trips.Trip')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("body", models.CharField(max_length=1000)),
+                ("points", models.IntegerField()),
+                (
+                    "reviewer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="ratings",
+                        to="companies.CargoOwnerCompany",
+                    ),
+                ),
+                (
+                    "trip",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="ratings",
+                        to="trips.Trip",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

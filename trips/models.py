@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.timezone import make_aware
 from django.contrib.postgres.fields import HStoreField, ArrayField
 
-from companies.models import TransporterCompany,CargoOwnerCompany
+from companies.models import TransporterCompany, CargoOwnerCompany
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
 from utils.validators import validate_start_date_is_before_end_date
@@ -20,7 +20,18 @@ class TripManager(models.Manager):
         Method to actually create a trip.
         """
 
-        REQUIRED_ARGS = ("start_date", "order", "truck", "origin", "destination", "offloading_point_contact", "loading_point_contact", "description", "trip_number", "transporter")
+        REQUIRED_ARGS = (
+            "start_date",
+            "order",
+            "truck",
+            "origin",
+            "destination",
+            "offloading_point_contact",
+            "loading_point_contact",
+            "description",
+            "trip_number",
+            "transporter",
+        )
 
         enforce_all_required_arguments_are_truthy(kwargs, REQUIRED_ARGS)
         trip = self.model(**kwargs)
@@ -46,22 +57,35 @@ class Trip(AbstractBaseModel, models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField(null=True, blank=True)
     order = models.ForeignKey(
-        "orders.Order", related_name="trips", on_delete=models.CASCADE)
+        "orders.Order", related_name="trips", on_delete=models.CASCADE
+    )
     truck = models.ForeignKey(
-        "assets.Truck", related_name="trips", on_delete=models.CASCADE)
+        "assets.Truck", related_name="trips", on_delete=models.CASCADE
+    )
     origin = models.ForeignKey(
-        "depots.Depot", related_name="trip_origins", on_delete=models.CASCADE)
+        "depots.Depot", related_name="trip_origins", on_delete=models.CASCADE
+    )
     destination = models.ForeignKey(
-        "depots.Depot", related_name="trip_destinations", on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=1, choices=STATUS_CHOICES, default="P")
+        "depots.Depot", related_name="trip_destinations", on_delete=models.CASCADE
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default="P")
     description = models.CharField(max_length=1000)
     # Do we need a trip number? So as to identify each trip for an order?
     trip_number = models.IntegerField()
-    transporter = models.ForeignKey(TransporterCompany, on_delete=models.CASCADE, related_name="trips")
-    tracking_data = ArrayField(base_field=models.CharField(max_length=50), blank=True) 
-    offloading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='offloading_trips')
-    loading_point_contact = models.ForeignKey("companies.PersonOfContact", on_delete=models.CASCADE, related_name='loading_trips')
+    transporter = models.ForeignKey(
+        TransporterCompany, on_delete=models.CASCADE, related_name="trips"
+    )
+    tracking_data = ArrayField(base_field=models.CharField(max_length=50), blank=True)
+    offloading_point_contact = models.ForeignKey(
+        "companies.PersonOfContact",
+        on_delete=models.CASCADE,
+        related_name="offloading_trips",
+    )
+    loading_point_contact = models.ForeignKey(
+        "companies.PersonOfContact",
+        on_delete=models.CASCADE,
+        related_name="loading_trips",
+    )
 
     objects = TripManager()
     active_objects = ActiveObjectsQuerySet.as_manager()
@@ -74,12 +98,16 @@ class Trip(AbstractBaseModel, models.Model):
         Ensure that the model is valid.
         """
         if self.end_date:
-            if not validate_start_date_is_before_end_date(self.start_date, self.end_date):
+            if not validate_start_date_is_before_end_date(
+                self.start_date, self.end_date
+            ):
                 raise ValidationError("Start date must come before the end date.")
 
         # The origin and destination must not be the same places
         if self.origin == self.destination:
-            raise ValidationError({"destination": "The destination cannot be the same as the origin."})
+            raise ValidationError(
+                {"destination": "The destination cannot be the same as the origin."}
+            )
 
         return super().clean()
 
@@ -96,13 +124,17 @@ class TripInvoiceManager(models.Manager):
 
         REQUIRED_ARGS = ("trip", "charges", "description")
 
-        enforce_all_required_arguments_are_truthy({"trip": trip, "charges": charges, "description": description}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy(
+            {"trip": trip, "charges": charges, "description": description},
+            REQUIRED_ARGS,
+        )
 
         trip_invoice = self.model(trip=trip, charges=charges, description=description)
 
         trip_invoice.clean()
         trip_invoice.save()
         return trip_invoice
+
 
 class TripInvoice(AbstractBaseModel, models.Model):
     """
@@ -146,7 +178,10 @@ class RatingsManager(models.Manager):
 
         REQUIRED_ARGS = ("reviewer", "body", "points", "trip")
 
-        enforce_all_required_arguments_are_truthy({"reviewer": reviewer, "trip": trip, "body": body, "points": points}, REQUIRED_ARGS)
+        enforce_all_required_arguments_are_truthy(
+            {"reviewer": reviewer, "trip": trip, "body": body, "points": points},
+            REQUIRED_ARGS,
+        )
 
         rating = self.model(reviewer=reviewer, trip=trip, body=body, points=points)
 
@@ -161,7 +196,9 @@ class Rating(AbstractBaseModel, models.Model):
     """
 
     # is the reviewer a User instance or a CargoOwner instance?
-    reviewer = models.ForeignKey(CargoOwnerCompany, on_delete=models.CASCADE, related_name="ratings")
+    reviewer = models.ForeignKey(
+        CargoOwnerCompany, on_delete=models.CASCADE, related_name="ratings"
+    )
     body = models.CharField(max_length=1000)
     points = models.IntegerField()
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="ratings")

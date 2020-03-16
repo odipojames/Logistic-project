@@ -11,28 +11,39 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
+    dependencies = [migrations.swappable_dependency(settings.AUTH_USER_MODEL)]
 
     operations = [
         HStoreExtension(),
         migrations.CreateModel(
-            name='Depot',
+            name="Depot",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('city', models.CharField(blank=True, max_length=50, null=True)),
-                ('address', models.CharField(blank=True, max_length=50, null=True)),
-                ('street', models.CharField(blank=True, max_length=50, null=True)),
-                ('state', models.CharField(blank=True, max_length=50, null=True)),
-                ('coordinates', django.contrib.postgres.fields.hstore.HStoreField()),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='Depots', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
+                ("city", models.CharField(blank=True, max_length=50, null=True)),
+                ("address", models.CharField(blank=True, max_length=50, null=True)),
+                ("street", models.CharField(blank=True, max_length=50, null=True)),
+                ("state", models.CharField(blank=True, max_length=50, null=True)),
+                ("coordinates", django.contrib.postgres.fields.hstore.HStoreField()),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="Depots",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

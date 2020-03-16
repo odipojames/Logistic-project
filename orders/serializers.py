@@ -14,15 +14,27 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'title', 'description', 'commodity', 'cargo_tonnage', 'origin',
-                  'destination', 'loading_point_contact', 'offloading_point_contact', 'status',
-                  'desired_rates', 'recurring_order', 'order_type', 'desired_truck_type', 'owner',
-                  'assigned', 'tracking_id']
+        fields = [
+            "id",
+            "title",
+            "description",
+            "commodity",
+            "cargo_tonnage",
+            "origin",
+            "destination",
+            "loading_point_contact",
+            "offloading_point_contact",
+            "status",
+            "desired_rates",
+            "recurring_order",
+            "order_type",
+            "desired_truck_type",
+            "owner",
+            "assigned",
+            "tracking_id",
+        ]
 
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'tracking_id': {'read_only': True},
-        }
+        extra_kwargs = {"id": {"read_only": True}, "tracking_id": {"read_only": True}}
 
     def create(self, validated_data):
         """overide create method to use Oder model Manager"""
@@ -32,37 +44,40 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         Cargo owner can only enter commodities by their company
         """
-        user = self.context['request'].user
+        user = self.context["request"].user
         company = CargoOwnerCompany.objects.get(company_director=user).pk
-        commodities = list(
-            Commodity.active_objects.get_commodity(created_by=company))
+        commodities = list(Commodity.active_objects.get_commodity(created_by=company))
         persons_of_contact = list(
-            PersonOfContact.active_objects.get_person_of_contact(company=company))
+            PersonOfContact.active_objects.get_person_of_contact(company=company)
+        )
         rates = list(Rate.active_objects.get_rates(created_by=company))
-        if data['commodity'] not in commodities:
+        if data["commodity"] not in commodities:
+            raise serializers.ValidationError({"commodity": "Commodity not found"})
+        if data["destination"] == data["origin"]:
             raise serializers.ValidationError(
-                {"commodity": "Commodity not found"})
-        if data['destination'] == data['origin']:
-            raise serializers.ValidationError(
-                {"destination":"destination and origin  cannot be the same"})
+                {"destination": "destination and origin  cannot be the same"}
+            )
 
-        for depot in data['destination']:
+        for depot in data["destination"]:
             if not depot.is_viewable_by_user(user=user):
                 raise serializers.ValidationError(
-                    {"destination": "Destination Depot not found"})
+                    {"destination": "Destination Depot not found"}
+                )
 
-        for depot in data['origin']:
+        for depot in data["origin"]:
             if not depot.is_viewable_by_user(user=user):
-                raise serializers.ValidationError(
-                    {"origin": "Origin Depot not found"})
+                raise serializers.ValidationError({"origin": "Origin Depot not found"})
 
-        if data['loading_point_contact'] not in persons_of_contact:
+        if data["loading_point_contact"] not in persons_of_contact:
             raise serializers.ValidationError(
-                {"loading_point_contact": "Loading person contact not found"})
-        if data['offloading_point_contact'] not in persons_of_contact:
+                {"loading_point_contact": "Loading person contact not found"}
+            )
+        if data["offloading_point_contact"] not in persons_of_contact:
             raise serializers.ValidationError(
-                {"offloading_point_contact": "offloading person contact not found"})
-        if data['desired_rates'] not in rates:
+                {"offloading_point_contact": "offloading person contact not found"}
+            )
+        if data["desired_rates"] not in rates:
             raise serializers.ValidationError(
-                {"desired_rates": "Company rates not found"})
+                {"desired_rates": "Company rates not found"}
+            )
         return data
