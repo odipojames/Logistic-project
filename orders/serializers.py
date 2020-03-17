@@ -45,39 +45,42 @@ class OrderSerializer(serializers.ModelSerializer):
         Cargo owner can only enter commodities by their company
         """
         user = self.context["request"].user
-        company = CargoOwnerCompany.objects.get(company_director=user).pk
-        commodities = list(Commodity.active_objects.get_commodity(created_by=company))
-        persons_of_contact = list(
-            PersonOfContact.active_objects.get_person_of_contact(company=company)
-        )
-        rates = list(Rate.active_objects.get_rates(created_by=company))
-        if data["commodity"] not in commodities:
-            raise serializers.ValidationError({"commodity": "Commodity not found"})
+        if user.is_superuser == False:
+            company_instance = user.employer
+            company = CargoOwnerCompany.objects.get(company=company_instance).pk
+            commodities = list(Commodity.active_objects.get_commodity(created_by=company))
+            persons_of_contact = list(
+                PersonOfContact.active_objects.get_person_of_contact(company=company)
+            )
+            rates = list(Rate.active_objects.get_rates(created_by=company))
+            if data["commodity"] not in commodities:
+                raise serializers.ValidationError({"commodity": "Commodity not found"})
+
+            for depot in data["destination"]:
+                if not depot.is_viewable_by_user(user=user):
+                    raise serializers.ValidationError(
+                        {"destination": "Destination Depot not found"}
+                    )
+
+            for depot in data["origin"]:
+                if not depot.is_viewable_by_user(user=user):
+                    raise serializers.ValidationError({"origin": "Origin Depot not found"})
+
+            if data["loading_point_contact"] not in persons_of_contact:
+                raise serializers.ValidationError(
+                    {"loading_point_contact": "Loading person contact not found"}
+                )
+            if data["offloading_point_contact"] not in persons_of_contact:
+                raise serializers.ValidationError(
+                    {"offloading_point_contact": "offloading person contact not found"}
+                )
+            if data["desired_rates"] not in rates:
+                raise serializers.ValidationError(
+                    {"desired_rates": "Company rates not found"}
+                )
+
         if data["destination"] == data["origin"]:
             raise serializers.ValidationError(
                 {"destination": "destination and origin  cannot be the same"}
             )
-
-        for depot in data["destination"]:
-            if not depot.is_viewable_by_user(user=user):
-                raise serializers.ValidationError(
-                    {"destination": "Destination Depot not found"}
-                )
-
-        for depot in data["origin"]:
-            if not depot.is_viewable_by_user(user=user):
-                raise serializers.ValidationError({"origin": "Origin Depot not found"})
-
-        if data["loading_point_contact"] not in persons_of_contact:
-            raise serializers.ValidationError(
-                {"loading_point_contact": "Loading person contact not found"}
-            )
-        if data["offloading_point_contact"] not in persons_of_contact:
-            raise serializers.ValidationError(
-                {"offloading_point_contact": "offloading person contact not found"}
-            )
-        if data["desired_rates"] not in rates:
-            raise serializers.ValidationError(
-                {"desired_rates": "Company rates not found"}
-            )
-        return data
+        return super().validate(data)

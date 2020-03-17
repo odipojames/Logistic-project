@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from utils.renderers import JsnRenderer
 from .serializers import CargoTypeSerializer, CommoditySerializer
 
+
 # Create your views here.
 
 
@@ -22,7 +23,7 @@ class CargoTypeList(generics.ListCreateAPIView):
 
     renderer_classes = (JsnRenderer,)
     serializer_class = CargoTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAuthenticated,IsAdminOrReadOnly,)
 
     def get_queryset(self):
         """
@@ -51,7 +52,7 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
     renderer_classes = (JsnRenderer,)
     serializer_class = CargoTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAuthenticated,IsAdminOrReadOnly,)
 
     def get_queryset(self):
         """
@@ -102,22 +103,24 @@ class CommodityList(generics.ListCreateAPIView):
 
     renderer_classes = (JsnRenderer,)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAdminOrCargoOwner,)
+    permission_classes = (IsAuthenticated,IsAdminOrCargoOwner,)
 
     def get_queryset(self):
         """
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        company_instance = user.employer
+        company = CargoOwnerCompany.active_objects.get(company=company_instance).pk
         if user.is_authenticated and str(user.role) == "superuser":
             return Commodity.objects.all()
 
         return Commodity.active_objects.get_commodity(created_by=company)
 
     def post(self, request, format=None):
+        company = request.user.employer
         cargo_owner = CargoOwnerCompany.active_objects.get(
-            company_director=request.user
+            company=company
         ).pk
         data = request.data.copy()
         data["created_by"] = cargo_owner
@@ -138,7 +141,7 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
     renderer_classes = (JsnRenderer,)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAdminOrCargoOwner,)
+    permission_classes = (IsAuthenticated,IsAdminOrCargoOwner,)
 
     def get_queryset(self):
         """

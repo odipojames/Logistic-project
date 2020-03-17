@@ -16,8 +16,8 @@ from utils.renderers import JsnRenderer
 class DepotList(generics.ListCreateAPIView):
     """creating depots"""
 
-    permission_classes = [IsAuthenticated]
-    permission_classes = (IsAdminOrCargoOwner,)
+    
+    permission_classes = (IsAuthenticated,IsAdminOrCargoOwner,)
     serializer_class = DepotSerializer
     renderer_classes = (JsnRenderer,)
 
@@ -33,10 +33,10 @@ class DepotList(generics.ListCreateAPIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data["user"] = request.user.pk
-        if str(request.user.role) == "cargo-owner":
+        if str(request.user.role) !="superuser":
             # make the depot private when created by cargo owners
             data["is_public"] = False
-        if str(request.user.role) == "superuser":
+        if request.user.is_superuser:
             # make all depots created by admin be public to all cargo owners
             data["is_public"] = True
         serializers = self.serializer_class(data=data)
@@ -49,7 +49,7 @@ class DepotList(generics.ListCreateAPIView):
 class DepotRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """retrival,deleting and updating depots"""
 
-    permission_classes = (IsAdminOrCargoOwner | IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrCargoOwner | IsAdminOrReadOnly,IsAuthenticated)
     serializer_class = DepotSerializer
     renderer_classes = (JsnRenderer,)
 

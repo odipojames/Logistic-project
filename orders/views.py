@@ -18,15 +18,18 @@ class ListCreateOrder(ListCreateAPIView):
         user = self.request.user
         if user.is_authenticated and str(user.role) == "superuser":
             return Order.active_objects.all()
-        if user.is_authenticated and str(user.role) == "cargo-owner":
-            cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
+        if user.is_authenticated and str(user.role) != "superuser":
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.objects.get(company=company).pk
             return Order.active_objects.get_order(owner=cargo_owner)
 
     def post(self, request, format=None):
         user = self.request.user
         data = request.data.copy()
-        cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
-        data["owner"] = cargo_owner
+        if user.is_superuser == False:
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.objects.get(company=company).pk
+            data["owner"] = cargo_owner
         context = {"request": request}
         serializer = self.serializer_class(data=data, context=context)
         serializer.is_valid(raise_exception=True)
@@ -35,7 +38,7 @@ class ListCreateOrder(ListCreateAPIView):
             "order": dict(serializer.data),
             "message": "Orders successfully created",
         }
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(response, status=status.HTTP_201_CREATED)
 
 
 class RetrieveUpdateDeleteOrder(RetrieveUpdateDestroyAPIView):
@@ -47,8 +50,9 @@ class RetrieveUpdateDeleteOrder(RetrieveUpdateDestroyAPIView):
         user = self.request.user
         if user.is_authenticated and str(user.role) == "superuser":
             return Order.active_objects.all()
-        if user.is_authenticated and str(user.role) == "cargo-owner":
-            cargo_owner = CargoOwnerCompany.objects.get(company_director=user).pk
+        if user.is_authenticated and str(user.role) == "cargo-owner" or str(user.role)=="admin":
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.objects.get(company=company).pk
             return Order.active_objects.get_order(owner=cargo_owner)
 
     def get_object(self):

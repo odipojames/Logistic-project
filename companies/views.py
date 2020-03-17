@@ -214,15 +214,20 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        cargo_owner = CargoOwnerCompany.active_objects.get(company_director=user).pk
         if user.is_authenticated and str(user.role) == "superuser":
             return PersonOfContact.objects.all()
-        return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
+        if user.is_superuser == False:
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
+            return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     def create(self, request, *args, **kwargs):
-        company = CargoOwnerCompany.active_objects.get(company_director=request.user).pk
+        user = self.request.user
         data = request.data.copy()
-        data["company"] = company
+        if user.is_superuser == False:
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
+            data["company"] = cargo_owner
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -260,11 +265,12 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(
         deleted to the transporter and all to admin
         """
         user = self.request.user
-        company = Company.active_objects.get(company_director=user)
-        cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
         if user.is_authenticated and str(user.role) == "superuser":
             return PersonOfContact.objects.all()
-        return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
+        if user.is_superuser == False:
+            company = user.employer
+            cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
+            return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
 
     # getting a single person of contact
     def retrieve(self, request, pk):

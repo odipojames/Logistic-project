@@ -18,15 +18,16 @@ class ListRates(generics.ListCreateAPIView):
         partially deleted to cargo owner and all to admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
+        company_instance = user.employer
+        company = CargoOwnerCompany.active_objects.get(company=company_instance).pk
         if user.is_authenticated and str(user.role) == "superuser":
             return Rate.objects.all()
         return Rate.active_objects.get_rates(created_by=company)
 
     def create(self, request, *args, **kwargs):
+        company = self.request.user.employer
         created_by = CargoOwnerCompany.active_objects.get(
-            company_director=request.user
-        ).pk
+            company=company).pk
         data = request.data.copy()
         data["created_by"] = created_by
         serializer = self.serializer_class(data=data)
@@ -58,7 +59,7 @@ class RetrieveUpdateDeleteRates(generics.RetrieveUpdateDestroyAPIView):
         cargo owner and all to admin
         """
         user = self.request.user
-        company = Company.objects.get(company_director=user)
+        company = user.employer
         cargo_company = CargoOwnerCompany.active_objects.get(company=cargo_company)
         if user.is_authenticated and str(user.role) == "superuser":
             return Rate.objects.all()
