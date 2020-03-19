@@ -214,7 +214,7 @@ class EventManager(models.Manager):
     """events manager """
 
     def create_event(self, **kwargs):
-        REQUIRED_ARGS = ("name", "description", "trip", "triggered_by")
+        REQUIRED_ARGS = ("name", "trip", "triggered_by")
         enforce_all_required_arguments_are_truthy(kwargs, REQUIRED_ARGS)
         event = self.model(**kwargs)
         event.save()
@@ -234,12 +234,12 @@ class Event(AbstractBaseModel, models.Model):
         ("F", "finished"),
     )
     name = models.CharField(max_length=30, choices=NAME_CHOICES)
-    description = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, null=True, blank=True)
     trip = models.ForeignKey(
         "trips.Trip", on_delete=models.CASCADE, related_name="events"
     )
-    triggered_by = models.OneToOneField(
-        get_user_model(), on_delete=models.CASCADE, related_name="user_event"
+    triggered_by = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="user_events"
     )
 
     objects = EventManager()
