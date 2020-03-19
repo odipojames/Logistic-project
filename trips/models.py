@@ -236,7 +236,7 @@ class Event(AbstractBaseModel, models.Model):
     name = models.CharField(max_length=30, choices=NAME_CHOICES)
     description = models.CharField(max_length=100)
     trip = models.ForeignKey(
-        "trips.Trip", on_delete=models.CASCADE, related_name="trips"
+        "trips.Trip", on_delete=models.CASCADE, related_name="events"
     )
     triggered_by = models.OneToOneField(
         get_user_model(), on_delete=models.CASCADE, related_name="user_event"
