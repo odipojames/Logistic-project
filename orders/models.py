@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from utils.models import AbstractBaseModel, ActiveObjectsQuerySet
 from utils.helpers import enforce_all_required_arguments_are_truthy
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class OrderManager(models.Manager):
@@ -128,6 +129,9 @@ class Order(AbstractBaseModel, models.Model):
         "companies.CargoOwnerCompany", on_delete=models.CASCADE, related_name="orders"
     )
     assigned = models.BooleanField(default=False)
+    number_of_containers = models.PositiveIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(0)]
+    )
     # Added this just so we can track the order without using the auto-incrementing pk
     tracking_id = models.UUIDField(
         default=uuid.uuid4, blank=True, editable=False, unique=True, db_index=True

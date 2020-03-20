@@ -20,6 +20,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "description",
             "commodity",
             "cargo_tonnage",
+            "number_of_containers",
             "origin",
             "destination",
             "loading_point_contact",
@@ -48,7 +49,9 @@ class OrderSerializer(serializers.ModelSerializer):
         if user.is_superuser == False:
             company_instance = user.employer
             company = CargoOwnerCompany.objects.get(company=company_instance).pk
-            commodities = list(Commodity.active_objects.get_commodity(created_by=company))
+            commodities = list(
+                Commodity.active_objects.get_commodity(created_by=company)
+            )
             persons_of_contact = list(
                 PersonOfContact.active_objects.get_person_of_contact(company=company)
             )
@@ -64,7 +67,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
             for depot in data["origin"]:
                 if not depot.is_viewable_by_user(user=user):
-                    raise serializers.ValidationError({"origin": "Origin Depot not found"})
+                    raise serializers.ValidationError(
+                        {"origin": "Origin Depot not found"}
+                    )
 
             if data["loading_point_contact"] not in persons_of_contact:
                 raise serializers.ValidationError(
