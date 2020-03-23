@@ -6,11 +6,12 @@ from utils.permissions import IsAdminOrCargoOwner, IsAdminOrCargoOwnerRates
 from rates.models import Rate
 from rates.serializers import RateSerializer
 from companies.models import CargoOwnerCompany, Company
+from rest_framework.permissions import IsAuthenticated
 
 
 class ListRates(generics.ListCreateAPIView):
     serializer_class = RateSerializer
-    permission_classes = (IsAdminOrCargoOwner,)
+    permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
 
     def get_queryset(self):
         """
@@ -26,8 +27,7 @@ class ListRates(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         company = self.request.user.employer
-        created_by = CargoOwnerCompany.active_objects.get(
-            company=company).pk
+        created_by = CargoOwnerCompany.active_objects.get(company=company).pk
         data = request.data.copy()
         data["created_by"] = created_by
         serializer = self.serializer_class(data=data)
@@ -51,7 +51,7 @@ class ListRates(generics.ListCreateAPIView):
 
 class RetrieveUpdateDeleteRates(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RateSerializer
-    permission_classes = (IsAdminOrCargoOwnerRates,)
+    permission_classes = (IsAuthenticated, IsAdminOrCargoOwnerRates)
 
     def get_queryset(self):
         """
