@@ -1,6 +1,7 @@
 from rest_framework import serializers, exceptions
 from django.core.exceptions import ValidationError
 from . import models
+from companies.serializers import CargoOwnerSerializer
 
 
 class CargoTypeSerializer(serializers.ModelSerializer):
@@ -28,3 +29,9 @@ class CommoditySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         return models.Commodity.objects.create_commodity(**validated_data)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["cargo_type"] = CargoTypeSerializer(instance.cargo_type).data
+        response["created_by"] = CargoOwnerSerializer(instance.created_by).data
+        return response

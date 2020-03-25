@@ -12,6 +12,7 @@ from rest_framework_simplejwt.serializers import (
 from authentication.models import User, Profile
 from utils.validators import validate_international_phone_number
 from utils.helpers import get_errored_integrity_field, blacklist_user_outstanding_tokens
+from companies.models import Company
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -221,6 +222,22 @@ class CargoOwnerRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_cargo_owner(**validated_data)
 
 
+class CompanyDirectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "email", "phone", "role", "employer"]
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    """company serializer"""
+
+    company_director = CompanyDirectorSerializer()
+
+    class Meta:
+        model = Company
+        fields = "__all__"
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     phone = serializers.CharField(
@@ -236,6 +253,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "full_name", "email", "phone", "role", "employer"]
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["employer"] = CompanySerializer(instance.employer).data
+        return response
 
 
 class ProfileSerializer(serializers.ModelSerializer):
