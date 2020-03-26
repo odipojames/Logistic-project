@@ -18,6 +18,7 @@ from django.core import exceptions
 import django.contrib.auth.password_validation as validators
 from utils.helpers import get_errored_integrity_field
 from django.db.utils import IntegrityError
+from authentication.serializers import CompanyDirectorSerializer
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -182,10 +183,25 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ["title"]
 
 
+class MainCompanySerializer(serializers.ModelSerializer):
+    """company serializer"""
+
+    company_director = CompanyDirectorSerializer()
+
+    class Meta:
+        model = Company
+        fields = "__all__"
+
+
 class EmployeeSerializer(serializers.ModelSerializer):
     """serializer for creating employees"""
 
-    role_choice = (("admin", "admin"), ("staff", "staff"))
+    role_choice = (
+        ("admin", "admin"),
+        ("staff", "staff"),
+        ("transporter-director", "transporter-director"),
+        ("cargo-owner-director", "cargo-owner-director"),
+    )  ## TODO: disble director choices on front end
     role = serializers.ChoiceField(choices=role_choice, default="staff")
     is_verified = serializers.BooleanField(default=True)
     full_name = serializers.CharField()
@@ -222,6 +238,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"phone": "Please enter a valid international phone number"}
             )
+        if (
+            data.get("role") == "cargo-owner-director"
+            or data.get("role") == "transporter-director"
+        ):
+            raise serializers.ValidationError({"role": "Please provide a valid choice"})
         validated_data = super().validate(data)
 
         role = data.get("role", None)
@@ -234,3 +255,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         employee = User.objects.create_user(**validated_data)
         return employee
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["employer"] = MainCompanySerializer(instance.employer).data
+        return response

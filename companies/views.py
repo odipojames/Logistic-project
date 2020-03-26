@@ -219,7 +219,9 @@ class CreatePersonOfContact(generics.ListCreateAPIView):
         if user.is_superuser == False:
             company = user.employer
             cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
-            return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
+            return PersonOfContact.active_objects.get_person_of_contact(
+                company=cargo_owner
+            )
 
     def create(self, request, *args, **kwargs):
         user = self.request.user
@@ -270,7 +272,9 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(
         if user.is_superuser == False:
             company = user.employer
             cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
-            return PersonOfContact.active_objects.get_person_of_contact(company=cargo_owner)
+            return PersonOfContact.active_objects.get_person_of_contact(
+                company=cargo_owner
+            )
 
     # getting a single person of contact
     def retrieve(self, request, pk):
@@ -315,13 +319,7 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if (
-            str(user.role) == "transporter-director"
-            or str(user.role) == "cargo-owner-director"
-        ):
-            company = Company.objects.get(company_director=user)
-            return company.employees.filter(is_deleted=False)
-        if str(user.role) == "admin" or str(user.role) == "staff":
+        if user.is_superuser == False:
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
@@ -335,14 +333,8 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
     def post(self, request, format=None):
         user = self.request.user
         data = request.data.copy()
-        if str(user.role) == "admin":
+        if user.is_superuser == False:
             company = user.employer
-            data["employer"] = company.pk
-        if (
-            str(user.role) == "transporter-director"
-            or str(user.role) == "cargo-owner-director"
-        ):
-            company = Company.objects.get(company_director=user)
             data["employer"] = company.pk
         password = BaseUserManager().make_random_password(
             10
@@ -350,7 +342,8 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
         data["password"] = password
         email = data["email"]
         phone = data["phone"]
-        company = Company.objects.get(id=data["employer"])
+        if data["employer"]:
+            company = Company.objects.get(id=data["employer"])
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -382,14 +375,7 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
 
     def get_queryset(self):
         user = self.request.user
-        if (
-            str(user.role) == "transporter-director"
-            or str(user.role) == "cargo-owner-director"
-        ):
-            company = Company.objects.get(company_director=user)
-            return company.employees.filter(is_deleted=False)
-
-        if str(user.role) == "admin" or str(user.role) == "staff":
+        if user.is_superuser == False:
             company = user.employer
             return company.employees.filter(is_deleted=False)
 
