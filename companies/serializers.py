@@ -25,7 +25,8 @@ class CompanySerializer(serializers.ModelSerializer):
     """creating company dirctor for cargo owners """
 
     company_director = CargoOwnerRegistrationSerializer()
-    is_shypper = serializers.BooleanField(default=False)
+    CAT_CHOICES = (("cargo_owner", "cargo_owner"),)
+    category = serializers.ChoiceField(choices=CAT_CHOICES, default="cargo_owner")
     business_phone_no = serializers.CharField(
         max_length=15, validators=[validate_international_phone_number]
     )
@@ -39,7 +40,8 @@ class CompanyTSerializer(serializers.ModelSerializer):
     """creating company  director for transporters"""
 
     company_director = TransporterRegistrationSerializer()
-    is_shypper = serializers.BooleanField(default=False)
+    CAT_CHOICES = (("transporter", "transporter"),)
+    category = serializers.ChoiceField(choices=CAT_CHOICES, default="transporter")
     business_phone_no = serializers.CharField(
         max_length=15, validators=[validate_international_phone_number]
     )
@@ -89,6 +91,7 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
         company_data = validated_data.pop("company", None)
         if company_data:
             company_data.pop("company_director", None)  # remove director
+            company_data.pop("category", None)
             company = instance.company
             serializer = CargoOwnerRegistrationSerializer(
                 data=company_data, partial=True
@@ -145,6 +148,7 @@ class TransporterSerializer(serializers.ModelSerializer):
         company_data = validated_data.pop("company", None)
         if company_data:
             company_data.pop("company_director", None)
+            company_data.pop("category", None)
             company = instance.company
             serializer = TransporterRegistrationSerializer(
                 data=company_data, partial=True

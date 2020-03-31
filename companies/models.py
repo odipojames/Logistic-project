@@ -65,7 +65,15 @@ class BaseCompany(models.Model):
         max_length=30,
         choices=[("locals", "locals"), ("transit", "transit"), ("both", "both")],
     )
-    is_active = models.BooleanField(default=False)
+    ONBOARDING_CHOICES = [
+        ("under_review", "under_review"),
+        ("approved", "approved"),
+        ("rejected", "rejected"),
+    ]
+    onboarding_status = models.CharField(
+        max_length=20, choices=ONBOARDING_CHOICES, default="under_review"
+    )
+    onboarding_comments = models.TextField(max_length=50, null=True, blank=True)
     # documents
     certificate_of_incorporation = models.FileField(
         upload_to="documents/", validators=[validate_file_extension]
@@ -82,7 +90,13 @@ class BaseCompany(models.Model):
 
 
 class Company(BaseCompany, models.Model):
-    is_shypper = models.BooleanField(default=False)
+
+    CAT_CHOICES = [
+        ("is_shypper", "is_shypper"),
+        ("transporter", "transporter"),
+        ("cargo_owner", "cargo_owner"),
+    ]
+    category = models.CharField(max_length=255, choices=CAT_CHOICES)
 
     active_objects = ActiveObjectsQuerySet.as_manager()
 

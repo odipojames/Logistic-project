@@ -8,6 +8,7 @@ from companies.views import (
     TransporterCompanyRetrieveUpdateDestroy,
     EmployeeListCreateAPIView,
     EmployeeRetrieveUpdateDestroyAPIView,
+    PendingCompaniesListAPIView,
 )
 
 urlpatterns = [
@@ -45,4 +46,5 @@ urlpatterns = [
         EmployeeRetrieveUpdateDestroyAPIView.as_view(),
         name="detail-employee",
     ),
+    path("pending/", PendingCompaniesListAPIView.as_view(), name="pending-companies"),
 ]

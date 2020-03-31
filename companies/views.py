@@ -19,6 +19,7 @@ from utils.permissions import (
     IsAdminOrCompanyOwner,
     IsCargoOwner,
     IsComponyAdminOrDirectorOrStaffReadOnly,
+    IsShyperEmployee,
 )
 from companies.models import (
     TransporterCompany,
@@ -32,6 +33,7 @@ from companies.serializers import (
     PersonofContactSerializer,
     CargoOwnerSerializer,
     EmployeeSerializer,
+    MainCompanySerializer,
 )
 from authentication.models import User, Role
 from django.core.mail import send_mail
@@ -202,6 +204,25 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         response = {"message": "Company deleted successfully"}
 
         return Response(response, status=status.HTTP_200_OK)
+
+
+class PendingCompaniesListAPIView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, IsShyperEmployee)
+    serializer_class = MainCompanySerializer
+    renderer_classes = (JSONRenderer, JsnRenderer)
+
+    def get_queryset(self):
+
+        return Company.objects.filter(onboarding_status__in=("under_review",))
+
+        def list(self, request, *args, **kwargs):
+            queryset = self.get_queryset()
+            serializer = self.serializer_class(queryset)
+            response = {
+                "pennding_companies": serializer.data,
+                "message": "pending companies succesfully retrieved",
+            }
+            return Response(response, status=status.HTTP_200_OK)
 
 
 class CreatePersonOfContact(generics.ListCreateAPIView):

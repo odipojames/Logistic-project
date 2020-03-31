@@ -75,6 +75,21 @@ class IsShyperAdmin(permissions.BasePermission):
         return request.user.is_authenticated and str(request.user.role) == "superuser"
 
 
+class IsShyperEmployee(permissions.BasePermission):
+    """allow only Shypper Employees or superuser"""
+
+    message = "you must be shypper employee to perfom this"
+
+    def has_permission(self, request, view):
+        company = request.user.employer
+        return (
+            request.user.is_authenticated
+            and request.user.is_superuser
+            or request.user.is_authenticated
+            and str(company.category) == "is_shypper"
+        )
+
+
 class IsAdminOrCompanyOwner(permissions.BasePermission):
     """
     check if shyper or cargo owner admin
