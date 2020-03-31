@@ -138,6 +138,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "updated_at",
             "last_login",
             "is_superuser",
+            "employer",
         ]
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
