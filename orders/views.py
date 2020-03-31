@@ -10,11 +10,13 @@ from companies.models import CargoOwnerCompany
 from depots.models import Depot
 from cargo_types.models import Commodity
 import math
+from rest_framework.renderers import JSONRenderer
 
 
 class ListCreateOrder(ListCreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin,)
+    renderer_classes = (JSONRenderer,)
 
     def get_queryset(self):
         user = self.request.user
@@ -54,6 +56,7 @@ class RetrieveUpdateDeleteOrder(RetrieveUpdateDestroyAPIView):
     serializer_class = OrderSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin,)
     multiple_lookup_fields = ["tracking_id"]
+    renderer_classes = (JSONRenderer,)
 
     def get_queryset(self):
         user = self.request.user

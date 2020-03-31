@@ -17,10 +17,11 @@ from utils.renderers import JsnRenderer
 from authentication.models import Profile
 from utils.permissions import IsOwnerOrAdmin
 from companies.models import Company, CargoOwnerCompany, TransporterCompany
+from rest_framework.renderers import JSONRenderer
 
 
 class RegistrationAPIView(generics.CreateAPIView):
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = RegistrationSerializer
 
     def post(self, request, *args, **kwargs):
@@ -49,7 +50,7 @@ class LoginAPIView(TokenObtainPairView):
 
 class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = UserUpdateSerializer
 
     def retrieve(self, request, *args, **kwargs):
@@ -108,7 +109,7 @@ def logout_view(request):
 class GetProfileAPIView(generics.ListAPIView):
     """Get the profile of the user who is currently logged in"""
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -131,7 +132,7 @@ class GetProfileAPIView(generics.ListAPIView):
 class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
     """user profile update api """
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrAdmin)
 

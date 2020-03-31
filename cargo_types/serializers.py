@@ -22,6 +22,8 @@ class CommoditySerializer(serializers.ModelSerializer):
     serializer for handling Commodity
     """
 
+    # cargo_type = serializers.CharField(source='cargo_type.cargo_type')
+
     class Meta:
         model = models.Commodity
         fields = ["id", "name", "cargo_type", "description", "created_by"]

@@ -7,11 +7,13 @@ from rates.models import Rate
 from rates.serializers import RateSerializer
 from companies.models import CargoOwnerCompany, Company
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 
 
 class ListRates(generics.ListCreateAPIView):
     serializer_class = RateSerializer
     permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
+    renderer_classes = (JSONRenderer,)
 
     def get_queryset(self):
         """
@@ -52,6 +54,7 @@ class ListRates(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteRates(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RateSerializer
     permission_classes = (IsAuthenticated, IsAdminOrCargoOwnerRates)
+    renderer_classes = (JSONRenderer,)
 
     def get_queryset(self):
         """

@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from utils.renderers import JsnRenderer
+from rest_framework.renderers import JSONRenderer
 
 
 # Create your views here.
@@ -16,10 +17,9 @@ from utils.renderers import JsnRenderer
 class DepotList(generics.ListCreateAPIView):
     """creating depots"""
 
-    
-    permission_classes = (IsAuthenticated,IsAdminOrCargoOwner,)
+    permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
     serializer_class = DepotSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
 
     def get_queryset(self):
         """overide queryset to return owner created depots and public depots only"""
@@ -33,7 +33,7 @@ class DepotList(generics.ListCreateAPIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data["user"] = request.user.pk
-        if str(request.user.role) !="superuser":
+        if str(request.user.role) != "superuser":
             # make the depot private when created by cargo owners
             data["is_public"] = False
         if request.user.is_superuser:
@@ -49,9 +49,9 @@ class DepotList(generics.ListCreateAPIView):
 class DepotRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """retrival,deleting and updating depots"""
 
-    permission_classes = (IsAdminOrCargoOwner | IsAdminOrReadOnly,IsAuthenticated)
+    permission_classes = (IsAdminOrCargoOwner | IsAdminOrReadOnly, IsAuthenticated)
     serializer_class = DepotSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
 
     def get_queryset(self):
         user = self.request.user

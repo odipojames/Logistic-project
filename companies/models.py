@@ -105,6 +105,13 @@ class Company(BaseCompany, models.Model):
         return self.business_name
 
 
+class CompanyQuerySet(ActiveObjectsQuerySet):
+    """queryset to handle cargo owner and  transporter company models"""
+
+    def get_company(self, company=None):
+        return self._active().filter(company=company)
+
+
 class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
     # operations deatails
     potential_monthly_tonnage = models.CharField(max_length=200)
@@ -113,7 +120,7 @@ class CargoOwnerCompany(AbstractBaseModel):  # inherits from company model
     )
     company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
     objects = models.Manager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
+    active_objects = CompanyQuerySet.as_manager()
 
     def __str__(self):
 
@@ -148,7 +155,7 @@ class TransporterCompany(AbstractBaseModel):
     company = models.OneToOneField(Company, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
-    active_objects = ActiveObjectsQuerySet.as_manager()
+    active_objects = CompanyQuerySet.as_manager()
 
     def __str__(self):
 

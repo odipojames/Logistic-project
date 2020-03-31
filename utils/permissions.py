@@ -99,11 +99,9 @@ class IsAdminOrCompanyOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        return request.user.is_authenticated and (
-            str(request.user.role) == "cargo-owner-director"
-            or str(request.user.role) == "transporter-director"
-            or str(request.user.role) == "superuser"
-        )
+        if request.method == "POST":
+            return True
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         user = request.user

@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.renderers import JsnRenderer
 from .serializers import CargoTypeSerializer, CommoditySerializer
+from rest_framework.renderers import JSONRenderer
 
 
 # Create your views here.
@@ -21,7 +22,7 @@ class CargoTypeList(generics.ListCreateAPIView):
     view to handle cargo type CRUD
     """
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CargoTypeSerializer
     permission_classes = (IsAuthenticated, IsAdminOrReadOnly)
 
@@ -50,7 +51,7 @@ class CargoTypeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     class that retrieves update and destroys cargo types
     """
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CargoTypeSerializer
     permission_classes = (IsAuthenticated, IsAdminOrReadOnly)
 
@@ -101,7 +102,7 @@ class CommodityList(generics.ListCreateAPIView):
     view to handle Commodity CRUD
     """
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CommoditySerializer
     permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
 
@@ -139,7 +140,7 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     class that retrieves,updates and destroys commodity
     """
 
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CommoditySerializer
     permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
 

@@ -41,17 +41,25 @@ from logisticts.settings import EMAIL_HOST_USER
 from django.contrib.auth.base_user import BaseUserManager
 from drf_yasg.utils import swagger_auto_schema
 from utils.helpers import send_sms
+from rest_framework.renderers import JSONRenderer
 
 
 class TransporterCompanyListAPIView(generics.ListCreateAPIView):
     """register transporter and its company once"""
 
-    queryset = TransporterCompany.objects.all()
     serializer_class = TransporterSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
+    permission_classes = (IsAdminOrCompanyOwner,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return TransporterCompany.objects.all()
+        if user.is_superuser == False:
+            return TransporterCompany.active_objects.get_company(company=user.employer)
 
     def list(self, request):
-        permission_classes = (IsShyperAdmin,)
+
         queryset = self.get_queryset()
         serialize = self.serializer_class(queryset, many=True)
 
@@ -69,12 +77,18 @@ class TransporterCompanyListAPIView(generics.ListCreateAPIView):
 class CargoOwnerCompanyListAPIView(generics.ListCreateAPIView):
     """register cargo owner and its company once"""
 
-    queryset = CargoOwnerCompany.objects.all()
     serializer_class = CargoOwnerSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
+    permission_classes = (IsAdminOrCompanyOwner,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return CargoOwnerCompany.objects.all()
+        if user.is_superuser == False:
+            return CargoOwnerCompany.active_objects.get_company(company=user.employer)
 
     def list(self, request):
-        permission_classes = (IsShyperAdmin,)
         queryset = self.get_queryset()
         serialize_companies = self.serializer_class(queryset, many=True)
 
@@ -96,12 +110,15 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     """
 
     serializer_class = CargoOwnerSerializer
-    renderer_classes = (JsnRenderer,)
-    permission_classes = (IsAdminOrCompanyOwner,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
+    permission_classes = (IsAuthenticated, IsAdminOrCompanyOwner)
 
     def get_queryset(self):
-
-        return CargoOwnerCompany.active_objects.all_objects()
+        user = self.request.user
+        if user.is_superuser:
+            return CargoOwnerCompany.objects.all()
+        if user.is_superuser == False:
+            return CargoOwnerCompany.active_objects.get_company(company=user.employer)
 
     def retrieve(self, request, pk):
         obj = self.get_object()
@@ -138,8 +155,8 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(request, company)
         company.is_active = False
         company.soft_delete(commit=True)
-        company.company_director.is_active = False
-        company.company_director.soft_delete(commit=True)
+        company.company.company_director.is_active = False
+        company.company.company_director.soft_delete(commit=True)
 
         response = {"message": "Company deleted successfully"}
 
@@ -153,7 +170,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     """
 
     serializer_class = TransporterSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     permission_classes = [IsAuthenticated]
     permission_classes = (IsAdminOrCompanyOwner,)
 
@@ -161,7 +178,8 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         user = self.request.user
         if user.is_authenticated and str(user.role) == "superuser":
             return TransporterCompany.objects.all()
-        return TransporterCompany.active_objects.all_objects()
+        if user.is_superuser == False:
+            return TransporterCompany.active_objects.get_company(company=user.employer)
 
     def retrieve(self, request, pk):
         company = self.get_object()
@@ -198,8 +216,8 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(request, company)
         company.is_active = False
         company.soft_delete(commit=True)
-        company.company_director.is_active = False
-        company.company_director.soft_delete(commit=True)
+        company.company.company_director.is_active = False
+        company.company.company_director.soft_delete(commit=True)
 
         response = {"message": "Company deleted successfully"}
 
@@ -228,6 +246,7 @@ class PendingCompaniesListAPIView(generics.ListAPIView):
 class CreatePersonOfContact(generics.ListCreateAPIView):
     serializer_class = PersonofContactSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin, IsAuthenticated)
+    renderer_classes = (JsnRenderer, JSONRenderer)
 
     def get_queryset(self):
         """
@@ -275,6 +294,7 @@ class PersonOfContactRetrieveUpdateDestroyAPIView(
 ):
     serializer_class = PersonofContactSerializer
     permission_classes = (IsCargoOwner | IsShyperAdmin, IsAuthenticated)
+    renderer_classes = (JsnRenderer, JSONRenderer)
 
     def get_parsers(self):
         if getattr(self, "swagger_fake_view", False):
@@ -335,7 +355,7 @@ class EmployeeListCreateAPIView(generics.ListCreateAPIView):
     """create company employer"""
 
     serializer_class = EmployeeSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     permission_classes = (IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
@@ -391,7 +411,7 @@ class EmployeeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
     """singl employes retrival updates and destroy"""
 
     serializer_class = EmployeeSerializer
-    renderer_classes = (JsnRenderer,)
+    renderer_classes = (JsnRenderer, JSONRenderer)
     permission_classes = (IsAuthenticated, IsComponyAdminOrDirectorOrStaffReadOnly)
 
     def get_queryset(self):
