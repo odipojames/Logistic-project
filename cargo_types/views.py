@@ -1,6 +1,6 @@
 from companies.models import CargoOwnerCompany
 from django.shortcuts import get_object_or_404
-from utils.permissions import IsAdminOrCargoOwner, IsAdminOrReadOnly
+from utils.permissions import IsAdminOrCargoOwner, IsAdminOrReadOnly, IsCommodityOwner
 from .models import CargoType, Commodity
 from rest_framework.exceptions import NotFound
 from django.http import Http404
@@ -104,27 +104,27 @@ class CommodityList(generics.ListCreateAPIView):
 
     renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
+    permission_classes = (IsAuthenticated, IsCommodityOwner)
 
     def get_queryset(self):
         """
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        if user.is_authenticated and str(user.role) == "superuser":
+        if user.is_superuser:
             return Commodity.objects.all()
 
         if user.is_superuser == False:
-            company_instance = user.employer
-            company = CargoOwnerCompany.active_objects.get(company=company_instance).pk
-
-            return Commodity.active_objects.get_commodity(created_by=company)
+            company = user.employer
+            cargo_company = CargoOwnerCompany.active_objects.get(company=company).pk
+            return Commodity.active_objects.get_commodity(created_by=cargo_company)
 
     def post(self, request, format=None):
-        company = request.user.employer
-        cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
         data = request.data.copy()
-        data["created_by"] = cargo_owner
+        if request.user.is_superuser == False:
+            company = request.user.employer
+            cargo_owner = CargoOwnerCompany.active_objects.get(company=company).pk
+            data["created_by"] = cargo_owner
         serializers = self.serializer_class(data=data)
         serializers.is_valid(raise_exception=True)
         serializers.save()
@@ -142,17 +142,20 @@ class CommodityRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
     renderer_classes = (JsnRenderer, JSONRenderer)
     serializer_class = CommoditySerializer
-    permission_classes = (IsAuthenticated, IsAdminOrCargoOwner)
+    permission_classes = (IsAuthenticated, IsCommodityOwner)
 
     def get_queryset(self):
         """
         overide query set return only unsoft deleted objects to cargo owner and all to Admin
         """
         user = self.request.user
-        company = CargoOwnerCompany.active_objects.get(company_director=user).pk
-        if user.is_authenticated and str(user.role) == "superuser":
+        if user.is_superuser:
             return Commodity.objects.all()
-        return Commodity.active_objects.get_commodity(created_by=company)
+
+        if user.is_superuser == False:
+            company = user.employer
+            cargo_company = CargoOwnerCompany.active_objects.get(company=company).pk
+            return Commodity.active_objects.get_commodity(created_by=cargo_company)
 
     # get the details of a particular commodity
     def retrieve(self, request, pk):
