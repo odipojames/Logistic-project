@@ -11,7 +11,11 @@ from .serializers import (
 from .models import Truck, Trailer
 from companies.models import TransporterCompany, Company
 from utils.renderers import JsnRenderer
-from utils.permissions import IsTransporterOrAdmin, IsAdminOrAssetOwner
+from utils.permissions import (
+    IsTransporterOrAdmin,
+    IsAdminOrAssetOwner,
+    IsTransporterEmployee,
+)
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
@@ -45,34 +49,24 @@ class TruckListCreateAPIView(generics.ListCreateAPIView):
 
     serializer_class = TruckSerializer
     renderer_classes = (JsnRenderer,)
-    permission_classes = (IsAuthenticated, IsTransporterOrAdmin)
+    permission_classes = (IsAuthenticated, IsTransporterEmployee)
 
     def get_queryset(self):
-
         user = self.request.user
-        if str(user.role) == "transporter-director":
-            company = Company.objects.get(company_director=user)
-            transporter = TransporterCompany.active_objects.get(company=company).pk
-            return Truck.active_objects.filter(owned_by=transporter)
-
-        if str(user.role) == "admin" or str(user.role) == "staff":
-            company = user.employer
-            transporter = TransporterCompany.active_objects.get(company=company).pk
-            return Truck.active_objects.filter(owned_by=transporter)
-
         if user.is_superuser:
             return Truck.objects.all()
 
+        if user.is_superuser == False:
+            company = user.employer
+            transporter = TransporterCompany.objects.get(company=company).pk
+            return Truck.active_objects.get_personal_assets(owned_by=transporter)
+
     def create(self, request):
         user = self.request.user
-        if str(user.role) == "transporter-director":
-            company = Company.objects.get(company_director=user)
-        if str(user.role) == "admin":
-            company = user.employer
-        owned_by = TransporterCompany.active_objects.get(company=company).pk
-
         data = request.data.copy()
-        data["owned_by"] = owned_by
+        if request.user.is_superuser == False:
+            owned_by = TransporterCompany.objects.get(company=request.user.employer).pk
+            data["owned_by"] = owned_by
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -97,24 +91,17 @@ class TruckListCreateAPIView(generics.ListCreateAPIView):
 class TruckRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TruckSerializer
     renderer_classes = (JsnRenderer,)
-    permission_classes = (IsAuthenticated, IsAdminOrAssetOwner)
+    permission_classes = (IsAuthenticated, IsTransporterEmployee)
 
     def get_queryset(self):
         user = self.request.user
-
-        user = self.request.user
-        if str(user.role) == "transporter-director":
-            company = Company.objects.get(company_director=user)
-            transporter = TransporterCompany.active_objects.get(company=company).pk
-            return Truck.active_objects.filter(owned_by=transporter)
-
-        if str(user.role) == "admin" or str(user.role) == "staff":
-            company = user.employer
-            transporter = TransporterCompany.active_objects.get(company=company).pk
-            return Truck.active_objects.filter(owned_by=transporter)
-
         if user.is_superuser:
             return Truck.objects.all()
+
+        if user.is_superuser == False:
+            company = user.employer
+            transporter = TransporterCompany.objects.get(company=company).pk
+            return Truck.active_objects.get_personal_assets(owned_by=transporter)
 
     def retrieve(self, request, pk):
         truck = self.get_object()
@@ -140,13 +127,10 @@ class TruckRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, pk):
         """ Delete a truck """
-        truck = self.get_object()
-        self.check_object_permissions(request, truck)
-        truck.soft_delete(commit=True)
-
-        response = {"message": "Truck deleted successfully"}
-
-        return Response(response, status=status.HTTP_200_OK)
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        obj.soft_delete(commit=True)
+        return Response(status.HTTP_204_NO_CONTENT)
 
 
 class TrailerListCreateAPIView(generics.ListCreateAPIView):
@@ -154,27 +138,23 @@ class TrailerListCreateAPIView(generics.ListCreateAPIView):
 
     serializer_class = TrailerSerializer
     renderer_classes = (JsnRenderer,)
-    permission_classes = (IsTransporterOrAdmin,)
+    permission_classes = (IsAuthenticated, IsTransporterEmployee)
 
     def get_queryset(self):
         user = self.request.user
-        if str(user.role) == "transporter-director":
-            company = Company.objects.get(company_director=user)
-        if str(user.role) == "admin" or str(user.role) == "staff":
-            company = user.employer
-        transporter = TransporterCompany.active_objects.get(company=company).pk
-
-        if user.role == "superuser":
+        if user.is_superuser:
             return Trailer.objects.all()
-        return Trailer.active_objects.get(owned_by=transporter)
+
+        if user.is_superuser == False:
+            company = user.employer
+            transporter = TransporterCompany.objects.get(company=company).pk
+            return Trailer.active_objects.get_personal_assets(owned_by=transporter)
 
     def create(self, request):
-        owned_by = TransporterCompany.active_objects.get(
-            company_director=request.user
-        ).pk
-
         data = request.data.copy()
-        data["owned_by"] = owned_by
+        if request.user.is_superuser == False:
+            owned_by = TransporterCompany.objects.get(company=request.user.employer).pk
+            data["owned_by"] = owned_by
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -202,19 +182,17 @@ class TrailerListCreateAPIView(generics.ListCreateAPIView):
 class TrailerRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TrailerSerializer
     renderer_classes = (JsnRenderer,)
-    permission_classes = (IsAdminOrAssetOwner,)
+    permission_classes = (IsTransporterEmployee,)
 
     def get_queryset(self):
         user = self.request.user
-        if str(user.role) == "transporter-director":
-            company = Company.objects.get(company_director=user)
-        if str(user.role) == "admin" or str(user.role) == "staff":
-            company = user.employer
-        transporter = TransporterCompany.active_objects.get(company=company).pk
-
-        if user.role == "superuser":
+        if user.is_superuser:
             return Trailer.objects.all()
-        return Trailer.active_objects.get(owned_by=transporter)
+
+        if user.is_superuser == False:
+            company = user.employer
+            transporter = TransporterCompany.objects.get(company=company).pk
+            return Trailer.active_objects.get_personal_assets(owned_by=transporter)
 
     def retrieve(self, request, pk):
         trailer = self.get_object()
@@ -227,11 +205,12 @@ class TrailerRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
         return Response(respose, status=status.HTTP_200_OK)
 
-    def update(self, request, pk):
+    def update(self, request, **kwargs):
         """ Amend Trailer """
         trailer = self.get_object()
         self.check_object_permissions(request, trailer)
         data = request.data.copy()
+        kwargs["partial"] = True
         data.pop("is_deleted", None)
         data.pop("owned_by", None)
         serializer = self.serializer_class(trailer, data=data, partial=True)
@@ -246,10 +225,7 @@ class TrailerRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
     def destroy(self, request, pk):
         """ Delete a trailer """
-        trailer = self.get_object()
-        self.check_object_permissions(request, trailer)
-        trailer.soft_delete(commit=True)
-
-        response = {"message": "Trailer deleted successfully"}
-
-        return Response(response, status=status.HTTP_200_OK)
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        obj.soft_delete(commit=True)
+        return Response(status.HTTP_204_NO_CONTENT)

@@ -7,6 +7,7 @@ from utils.validators import validate_passed_file_extension
 from utils.helpers import read_csv
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from companies.serializers import TransporterSerializer
 
 
 class TruckSerializer(serializers.ModelSerializer):
@@ -14,11 +15,21 @@ class TruckSerializer(serializers.ModelSerializer):
         model = Truck
         fields = "__all__"
 
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["owned_by"] = TransporterSerializer(instance.owned_by).data
+        return response
+
 
 class TrailerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trailer
         fields = "__all__"
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["owned_by"] = TransporterSerializer(instance.owned_by).data
+        return response
 
 
 class BaseAssetsCsvSerializer(serializers.Serializer):

@@ -45,6 +45,42 @@ class IsTransporterOrAdmin(permissions.BasePermission):
         )
 
 
+class IsTransporterEmployee(permissions.BasePermission):
+    """permissions for creating assets """
+
+    message = "you must be a transporter employee to perfom this"
+
+    def has_permission(self, request, view):
+        company = request.user.employer
+        user = request.user
+        if user.is_superuser:
+            return True
+        if (
+            str(company.category) == "transporter"
+            and str(user.role) == "staff"
+            and request.method in SAFE_METHODS
+        ):
+            return True
+        if str(company.category) == "transporter":
+            return (
+                str(user.role) == "transporter-director"
+                or str(request.user.role) == "admin"
+            )
+
+    def has_object_permission(self, request, view, obj):
+        company = request.user.employer
+        if request.user.is_superuser:
+            return True
+        if str(company.category) == "transporter":
+            transporter = TransporterCompany.objects.get(company=company)
+            return (
+                obj.owned_by == transporter
+                and str(request.user.role) == "transporter-director"
+                or obj.owned_by == transporter
+                and str(request.user.role) == "admin"
+            )
+
+
 class IsAdminOrCargoOwner(permissions.BasePermission):
     """
     allow only cargo owners and admin to perform spacific actions
