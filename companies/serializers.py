@@ -19,6 +19,7 @@ import django.contrib.auth.password_validation as validators
 from utils.helpers import get_errored_integrity_field
 from django.db.utils import IntegrityError
 from authentication.serializers import CompanyDirectorSerializer
+from rest_framework.validators import ValidationError
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -87,15 +88,32 @@ class CargoOwnerSerializer(serializers.ModelSerializer):
         director.save()
         return cargo_company
 
+
+class CargoOwnerUpdateSerializer(serializers.ModelSerializer):
+    """serializer for retrival and updating cargo owner companies """
+
+    company = CompanySerializer(read_only=False)
+
+    class Meta:
+        model = CargoOwnerCompany
+        fields = "__all__"
+
+    def get_fields(self):
+        fields = super(CargoOwnerUpdateSerializer, self).get_fields()
+        try:  # Handle unique fields on company serializer
+            if self.instance and self.instance.company:
+                fields["company"].instance = self.instance.company
+        except Company.DoesNotExist:
+            pass
+        return fields
+
     def update(self, instance, validated_data):
         company_data = validated_data.pop("company", None)
         if company_data:
             company_data.pop("company_director", None)  # remove director
             company_data.pop("category", None)
             company = instance.company
-            serializer = CargoOwnerRegistrationSerializer(
-                data=company_data, partial=True
-            )
+            serializer = CargoOwnerSerializer(data=company_data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.update(company, company_data)
 
@@ -142,6 +160,25 @@ class TransporterSerializer(serializers.ModelSerializer):
         director.employer = transport_company.company
         director.save()
         return transport_company
+
+
+class TransporterUpdateSerializer(serializers.ModelSerializer):
+    """transport company retrival and update"""
+
+    company = CompanyTSerializer(read_only=False)
+
+    class Meta:
+        model = TransporterCompany
+        fields = "__all__"
+
+    def get_fields(self):
+        fields = super(TransporterUpdateSerializer, self).get_fields()
+        try:  # Handle unique fields on company serializer
+            if self.instance and self.instance.company:
+                fields["company"].instance = self.instance.company
+        except Company.DoesNotExist:
+            pass
+        return fields
 
     def update(self, instance, validated_data):
 

@@ -34,6 +34,8 @@ from companies.serializers import (
     CargoOwnerSerializer,
     EmployeeSerializer,
     MainCompanySerializer,
+    CargoOwnerUpdateSerializer,
+    TransporterUpdateSerializer,
 )
 from authentication.models import User, Role
 from django.core.mail import send_mail
@@ -109,7 +111,7 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     Only the Cargo Owner can crud its company
     """
 
-    serializer_class = CargoOwnerSerializer
+    serializer_class = CargoOwnerUpdateSerializer
     renderer_classes = (JsnRenderer, JSONRenderer)
     permission_classes = (IsAuthenticated, IsAdminOrCompanyOwner)
 
@@ -157,10 +159,7 @@ class CargoOwnerCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         company.soft_delete(commit=True)
         company.company.company_director.is_active = False
         company.company.company_director.soft_delete(commit=True)
-
-        response = {"message": "Company deleted successfully"}
-
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(status.HTTP_204_NO_CONTENT)
 
 
 class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
@@ -169,7 +168,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     Only the Transporter can crud its company
     """
 
-    serializer_class = TransporterSerializer
+    serializer_class = TransporterUpdateSerializer
     renderer_classes = (JsnRenderer, JSONRenderer)
     permission_classes = [IsAuthenticated]
     permission_classes = (IsAdminOrCompanyOwner,)
@@ -218,10 +217,7 @@ class TransporterCompanyRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         company.soft_delete(commit=True)
         company.company.company_director.is_active = False
         company.company.company_director.soft_delete(commit=True)
-
-        response = {"message": "Company deleted successfully"}
-
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(status.HTTP_204_NO_CONTENT)
 
 
 class PendingCompaniesListAPIView(generics.ListAPIView):
