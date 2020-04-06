@@ -265,7 +265,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """user profile serializer"""
 
     date_of_birth = serializers.DateField(input_formats=["%d-%m-%Y"])
-    user = UserSerializer(read_only=True)
+    user = UserSerializer(read_only=False)
     person_contact_phone = serializers.CharField(
         validators=[validate_international_phone_number]
     )
@@ -275,16 +275,55 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, data):
-
-        if not validate_international_phone_number(data.get("person_contact_phone")):
-            raise serializers.ValidationError(
-                {
-                    "person_contact_phone": "Please enter a valid international phone number"
-                }
-            )
+        phone = data.get("person_contact_phone", None)
+        if phone:
+            if not validate_international_phone_number(
+                data.get("person_contact_phone")
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "person_contact_phone": "Please enter a valid international phone number"
+                    }
+                )
         validated_data = super().validate(data)
 
         return validated_data
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """ serializer to update user Profile"""
+
+    date_of_birth = serializers.DateField(input_formats=["%d-%m-%Y"])
+    user = UserSerializer(read_only=False)
+    person_contact_phone = serializers.CharField(
+        validators=[validate_international_phone_number]
+    )
+
+    class Meta:
+        model = Profile
+        fields = "__all__"
+
+    def get_fields(self):
+        fields = super(ProfileUpdateSerializer, self).get_fields()
+        try:  # Handle unique fields on user ModelSerializer
+            if self.instance and self.instance.user:
+                fields["user"].instance = self.instance.user
+        except User.DoesNotExist:
+            pass
+        return fields
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        if user_data:
+            user_data.pop("role", None)
+            user_data.pop("employer", None)
+            user_data.pop("email", None)
+            user = instance.user
+            serializer = ProfileSerializer(data=user_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.update(user, user_data)
+
+        return super().update(instance, validated_data)
 
 
 class CustomTokenSerializer(serializers.Serializer):

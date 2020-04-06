@@ -12,6 +12,7 @@ from authentication.serializers import (
     RegistrationSerializer,
     UserUpdateSerializer,
     ProfileSerializer,
+    ProfileUpdateSerializer,
 )
 from utils.renderers import JsnRenderer
 from authentication.models import Profile
@@ -133,7 +134,7 @@ class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
     """user profile update api """
 
     renderer_classes = (JsnRenderer, JSONRenderer)
-    serializer_class = ProfileSerializer
+    serializer_class = ProfileUpdateSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrAdmin)
 
     def get_queryset(self):
@@ -168,7 +169,11 @@ class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
         self.check_object_permissions(self.request, obj)
         kwargs["partial"] = True
         data = request.data
-        data.pop("user")
+        user = data.get("user", None)
+        if user:
+            user.pop("role", None)
+            user.pop("employer", None)
+            user.pop("email", None)
         serializer = self.serializer_class(obj, data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
