@@ -145,6 +145,31 @@ class IsAdminOrCompanyOwner(permissions.BasePermission):
         return obj.company.company_director == user or user.is_superuser
 
 
+class IsAdminOrCargoOwnerEmployee(permissions.BasePermission):
+    """
+    allow only cargo owners and admin to perform spacific actions
+    """
+
+    message = "you dont have an access to this action"
+
+    def has_permission(self, request, view):
+        if request.user.is_superuser == False:
+            company = request.user.employer
+            return (
+                str(company.category) == "cargo_owner"
+                or str(company.category) == "is_shypper"
+            )
+        return request.user.is_superuser
+
+    def has_object_permission(self, request, view, obj):
+        """allow only owners and their employess or admin to delete and uptade rates """
+        if request.user.is_superuser == False:
+            company = request.user.employer
+            cargo_company = CargoOwnerCompany.objects.get(company=company)
+            return obj.created_by == cargo_company
+        return request.user.is_superuser
+
+
 class IsAdminOrCargoOwnerRates(permissions.BasePermission):
     """
     allow only cargo owners and admin to perform spacific actions

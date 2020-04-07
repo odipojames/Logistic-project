@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rates.models import Rate
 from decimal import Decimal
+from companies.serializers import CargoOwnerSerializer
 
 
 class RateSerializer(serializers.ModelSerializer):
@@ -37,3 +38,8 @@ class RateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return Rate.objects.create_rates(**validated_data)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["created_by"] = CargoOwnerSerializer(instance.created_by).data
+        return response
